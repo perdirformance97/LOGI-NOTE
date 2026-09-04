@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PERDIRFORMANCE LOGI-NOTE V1</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        /* Accessibilité : barres de défilement toujours visibles et stylisées */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-left: 1px solid #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border: 3px solid #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b;
+        }
+
+        /* Editeur WYSIWYG */
+        .editor-content:empty:before {
+            content: attr(placeholder);
+            color: #94a3b8;
+            pointer-events: none;
+            display: block;
+        }
+        .editor-content:focus {
+            outline: none;
+        }
+        
+        /* Focus visible pour l'accessibilité RGAA */
+        *:focus-visible {
+            outline: 3px solid #0ea5e9;
+            outline-offset: 2px;
+        }
+
+        /* Micro animation */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .mic-active {
+            animation: pulse-red 1.5s infinite;
+            background-color: #fee2e2 !important;
+            color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+        
+        /* Style des listes dans l'éditeur */
+        .editor-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .editor-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        
+        /* Styles additionnels éditeur WYSIWYG */
+        .editor-content h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .editor-content h4 { font-size: 1.1rem; font-weight: 600; color: #334155; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+        .editor-content p { margin-bottom: 0.5rem; }
+        
+        /* Surlignage recherche */
+        mark.search-highlight {
+            background-color: #fef08a;
+            color: #0f172a;
+            padding: 0.1em 0.2em;
+            border-radius: 0.2em;
+        }
+
+        /* Animations inspirantes */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-brand-50/50">
+
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm z-10 shrink-0">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-brand-600 to-brand-500 text-white p-2 rounded-lg shadow-md transform transition-transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-brand-700 leading-tight">PERDIRFORMANCE LOGI-NOTE V1</h1>
+                    <p class="text-xs text-slate-500 font-medium">Prise de notes et suivi de RDV en EPLE 🏫</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Notifications Rappels -->
+                <div class="relative" id="reminderDropdownContainer">
+                    <button id="btnReminders" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Rappels">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                        <span id="reminderBadge" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">0</span>
+                    </button>
+                    <!-- Menu déroulant des alertes -->
+                    <div id="reminderDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden origin-top-right transition-all">
+                        <div class="p-3 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                Rappels programmés
+                            </h3>
+                            <span id="reminderCountText" class="text-xs font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200 shadow-sm">0</span>
+                        </div>
+                        <div id="reminderList" class="max-h-[60vh] overflow-y-auto p-2 flex flex-col gap-1.5">
+                            <!-- Les rappels sont générés ici par JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nouveau bouton Calendrier -->
+                <button id="btnCalendar" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Calendrier global" title="Ouvrir le calendrier annuel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+                </button>
+
+                <input type="file" id="importFile" accept=".json,.ics,.vcs,.csv" class="hidden" aria-label="Fichier à importer (JSON, ICS, CSV)">
+                <button id="btnImport" class="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-2 focus:ring-2 focus:ring-brand-500" title="Importer (JSON, iCalendar .ics ou Tableur .csv)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    <span class="hidden sm:inline">Importer</span>
+                </button>
+                <button id="btnExport" class="px-3 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition-colors flex items-center gap-2 shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-brand-500" title="Exporter en JSON, iCalendar (.ics) ou Tableur (.csv)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    <span class="hidden sm:inline">Exporter</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-screen-2xl w-full mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden">
+        
+        <!-- Section Saisie de Note -->
+        <section class="w-full lg:w-5/12 flex flex-col bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden shrink-0 lg:shrink flex-1 lg:flex-none">
+            <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center shrink-0">
+                <h2 id="formTitle" class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <span class="text-xl">📝</span>
+                    Nouvelle Note
+                </h2>
+                <span id="draftStatus" class="text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-md opacity-0 transition-opacity duration-300">✨ Sauvegardé</span>
+            </div>
+            
+            <div class="p-3 overflow-y-auto flex-1 flex flex-col gap-2.5">
+                <!-- Ligne 1 : Date, Année, Nom -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="col-span-1">
+                        <label for="dateInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Date</label>
+                        <input type="date" id="dateInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors" required>
+                    </div>
+                    <div class="col-span-1">
+                        <label for="yearInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Année sc.</label>
+                        <input type="text" id="yearInput" placeholder="Ex: 2026-2027" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label for="nameInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Nom Prénom</label>
+                        <input type="text" id="nameInput" list="namesList" placeholder="Nom de la personne" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors" required>
+                        <datalist id="namesList"></datalist>
+                    </div>
+                </div>
+
+                <!-- Ligne 2 : Qualité & Champs conditionnels -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div class="col-span-1">
+                        <label for="roleInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Qualité</label>
+                        <select id="roleInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors cursor-pointer">
+                            <option value="Professeur">Professeur</option>
+                            <option value="Élève">Élève</option>
+                            <option value="Personnel de direction">Pers. direction</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div id="teacherSubjectContainer" class="col-span-1 sm:col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="teacherSubjectInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Matière enseignée</label>
+                        <input type="text" id="teacherSubjectInput" list="subjectsList" placeholder="Ex: Mathématiques..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                        <datalist id="subjectsList"></datalist>
+                    </div>
+                    
+                    <div id="parentStudentNameContainer" class="hidden col-span-1 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="parentStudentNameInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Enfant (Prénom Nom)</label>
+                        <input type="text" id="parentStudentNameInput" list="namesList" placeholder="Ex: Jules Dupont" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                    </div>
+
+                    <div id="studentClassContainer" class="hidden col-span-1 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="studentClassInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Classe</label>
+                        <input type="text" id="studentClassInput" list="classesList" placeholder="Ex: 3ème A" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                        <datalist id="classesList"></datalist>
+                    </div>
+
+                    <div id="otherRoleContainer" class="hidden col-span-1 sm:col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="otherRoleInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Précisez</label>
+                        <input type="text" id="otherRoleInput" list="otherRolesList" placeholder="Ex: Inspecteur..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                        <datalist id="otherRolesList"></datalist>
+                    </div>
+                </div>
+
+                <!-- Ligne 3 : Motif, Statut, Priorité, Rappel -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="col-span-2">
+                        <label for="motifInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Motif principal</label>
+                        <select id="motifInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors cursor-pointer">
+                            <option value="">-- Sélectionnez (optionnel) --</option>
+                            <optgroup label="Suivi Scolaire et Pédagogique">
+                                <option value="Chute des résultats ou désinvestissement">Chute des résultats ou désinvestissement</option>
+                                <option value="Valorisation et excellence">Valorisation et excellence</option>
+                                <option value="Construction de l'orientation">Construction de l'orientation</option>
+                                <option value="Aménagements spécifiques">Aménagements spécifiques (PAP, PPS, PPRE, PAI)</option>
+                            </optgroup>
+                            <optgroup label="Respect du Cadre et Vie Scolaire">
+                                <option value="Défaut d'assiduité ou de ponctualité">Défaut d'assiduité ou de ponctualité</option>
+                                <option value="Manquements au règlement intérieur">Manquements au règlement intérieur</option>
+                                <option value="Atteintes aux personnes ou aux biens">Atteintes aux personnes ou aux biens</option>
+                                <option value="Fraude et intégrité">Fraude et intégrité</option>
+                            </optgroup>
+                            <optgroup label="Climat Scolaire et Sécurité">
+                                <option value="Prévention et gestion du harcèlement">Prévention et gestion du harcèlement</option>
+                                <option value="Régulation de conflits">Régulation de conflits</option>
+                                <option value="Usage inapproprié des réseaux sociaux">Usage inapproprié des réseaux sociaux</option>
+                            </optgroup>
+                            <optgroup label="Procédures Disciplinaires et Éducatives">
+                                <option value="Préparation d'une Commission Éducative">Préparation d'une Commission Éducative</option>
+                                <option value="Enquête préalable disciplinaire">Enquête préalable disciplinaire</option>
+                                <option value="Notification de mesures">Notification de mesures</option>
+                            </optgroup>
+                            <optgroup label="Accompagnement Social, Médical et Psychologique">
+                                <option value="Mal-être et détresse">Mal-être et détresse</option>
+                                <option value="Difficultés matérielles ou familiales">Difficultés matérielles ou familiales</option>
+                                <option value="Information préoccupante">Information préoccupante</option>
+                            </optgroup>
+                            <optgroup label="Engagement et Citoyenneté">
+                                <option value="Exercice d'un mandat">Exercice d'un mandat</option>
+                                <option value="Portage d'initiatives">Portage d'initiatives</option>
+                            </optgroup>
+                            <option value="Autre">Autre (préciser)...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-span-1">
+                        <label for="statusInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Statut</label>
+                        <select id="statusInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors cursor-pointer">
+                            <option value="en_cours">En cours</option>
+                            <option value="rappel">À rappeler</option>
+                            <option value="cloture">Clôturé</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-1">
+                        <label for="priorityInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Priorité</label>
+                        <select id="priorityInput" class="w-full border border-slate-300 rounded py-1 px-0.5 sm:px-1.5 text-[10px] sm:text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors cursor-pointer">
+                            <option value="aucune">⚪ Normale</option>
+                            <option value="court">🔴 Courte</option>
+                            <option value="moyen">🟠 Moyenne</option>
+                            <option value="long">🟢 Longue</option>
+                        </select>
+                    </div>
+                    
+                    <div id="otherMotifContainer" class="hidden col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="otherMotifInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Motif précis</label>
+                        <input type="text" id="otherMotifInput" placeholder="Ex: Remise de diplôme..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                    </div>
+                    
+                    <div id="reminderContainer" class="hidden col-span-2 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="reminderDateInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Date rappel</label>
+                        <input type="date" id="reminderDateInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-[10px] sm:text-xs h-7 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-amber-50 hover:bg-white transition-colors">
+                    </div>
+                </div>
+
+                <!-- Ligne 4 : Pièce jointe & URL -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="col-span-1">
+                        <label for="urlInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Lien (optionnel)</label>
+                        <input type="url" id="urlInput" placeholder="https://..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Pièce jointe (< 1.5 Mo)</label>
+                        <div class="flex items-center h-7">
+                            <input type="file" id="fileInput" class="w-full text-[10px] border border-slate-300 rounded py-0.5 px-1 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 hover:bg-white transition-colors file:mr-1 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer h-full">
+                            <div id="attachmentPreview" class="hidden items-center justify-between w-full text-[11px] text-brand-700 bg-brand-50 px-2 rounded border border-brand-200 h-full">
+                                <span id="attachmentNameDisplay" class="truncate max-w-[80px] sm:max-w-[120px] font-medium"></span>
+                                <button type="button" id="btnRemoveAttachment" class="text-red-500 hover:text-red-700 font-bold ml-1" title="Supprimer">✖</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Espace Éditeur (Prend le max de place possible) -->
+                <div class="space-y-1 flex-1 flex flex-col min-h-[450px] mt-1">
+                    <label class="block text-xs font-semibold text-slate-700">Contenu de la note</label>
+                    <div class="border border-slate-300 rounded-md overflow-hidden flex flex-col flex-1 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 transition-shadow">
+                        <!-- Toolbar WYSIWYG enrichie -->
+                        <div class="bg-slate-100 border-b border-slate-300 p-1 flex flex-wrap gap-x-1 gap-y-1.5 items-center shrink-0">
+                            <!-- Groupe 1: Annuler / Titres -->
+                            <div class="flex items-center gap-0.5">
+                                <button type="button" data-cmd="undo" class="editor-btn p-1 text-slate-600 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Annuler">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                                </button>
+                                <button type="button" data-cmd="redo" class="editor-btn p-1 text-slate-600 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Rétablir">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                                </button>
+                                <div class="w-px h-4 bg-slate-300 mx-0.5"></div>
+                                <button type="button" data-cmd="formatBlock" data-arg="H3" class="editor-btn p-1 text-slate-700 font-bold hover:bg-slate-200 hover:text-brand-700 rounded transition-colors text-xs" title="Titre principal">T1</button>
+                                <button type="button" data-cmd="formatBlock" data-arg="H4" class="editor-btn p-1 text-slate-700 font-bold hover:bg-slate-200 hover:text-brand-700 rounded transition-colors text-xs" title="Sous-titre">T2</button>
+                            </div>
+                            
+                            <!-- Groupe 2: Polices & Couleurs -->
+                            <div class="flex items-center gap-1 ml-0.5">
+                                <select data-cmd="fontSize" class="editor-select text-xs font-medium border border-slate-300 rounded h-6 px-1 text-slate-700 bg-white hover:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer" title="Taille de police">
+                                    <option value="3">Normale</option>
+                                    <option value="1">Très petite</option>
+                                    <option value="2">Petite</option>
+                                    <option value="4">Moyenne</option>
+                                    <option value="5">Grande</option>
+                                    <option value="6">Très grande</option>
+                                    <option value="7">Énorme</option>
+                                </select>
+                                <div class="flex items-center gap-1 border border-slate-300 rounded h-6 w-6 overflow-hidden hover:border-brand-400 focus-within:ring-1 focus-within:ring-brand-500" title="Couleur du texte">
+                                    <input type="color" data-cmd="foreColor" class="editor-color w-8 h-8 -m-1 cursor-pointer" value="#0f172a" aria-label="Couleur du texte">
+                                </div>
+                            </div>
+                            
+                            <div class="hidden sm:block w-px h-4 bg-slate-300 mx-0.5"></div>
+                            
+                            <!-- Groupe 3: Formatage Texte -->
+                            <div class="flex items-center gap-0.5">
+                                <button type="button" data-cmd="bold" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Gras" aria-label="Gras">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 12a4 4 0 0 0 0-8H6v8"/><path d="M15 20a4 4 0 0 0 0-8H6v8Z"/></svg>
+                                </button>
+                                <button type="button" data-cmd="italic" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Italique" aria-label="Italique">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></svg>
+                                </button>
+                                <button type="button" data-cmd="underline" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Souligné" aria-label="Souligné">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/></svg>
+                                </button>
+                                <button type="button" data-cmd="strikeThrough" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Barré">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/></svg>
+                                </button>
+                            </div>
+                            
+                            <div class="hidden sm:block w-px h-4 bg-slate-300 mx-0.5"></div>
+                            
+                            <!-- Groupe 4: Listes & Alignement -->
+                            <div class="flex items-center gap-0.5">
+                                <button type="button" data-cmd="insertUnorderedList" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Liste à puces" aria-label="Liste à puces">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                                </button>
+                                <button type="button" data-cmd="insertOrderedList" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Liste numérotée" aria-label="Liste numérotée">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                                </button>
+                                <div class="w-px h-3 bg-slate-300 mx-0.5"></div>
+                                <button type="button" data-cmd="justifyLeft" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Aligner à gauche">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>
+                                </button>
+                                <button type="button" data-cmd="justifyCenter" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 hover:text-brand-700 rounded transition-colors" title="Centrer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="21" x2="3" y1="18" y2="18"/></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Micro dictée poussé à droite -->
+                            <button type="button" id="btnMic" class="ml-auto flex items-center gap-1 p-1 px-2.5 text-emerald-700 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 rounded-full transition-all text-[11px] font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" aria-label="Dicter vocalement">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                                <span id="micStatusText" class="hidden sm:inline">Dictée</span>
+                            </button>
+                        </div>
+                        <div id="editor" contenteditable="true" class="editor-content flex-1 p-3 sm:p-4 bg-white text-sm leading-relaxed overflow-y-auto prose prose-sm max-w-none" placeholder="Saisissez ou dictez vos idées lumineuses ici... 💡"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-3 border-t border-slate-200 bg-slate-50/50 shrink-0 flex gap-2">
+                <button id="btnCancelEdit" class="hidden px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-all shadow-sm focus:ring-2 focus:ring-slate-400">
+                    ❌ Annuler
+                </button>
+                <button id="btnSaveNote" class="flex-1 w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transform hover:-translate-y-0.5">
+                    <svg id="saveBtnIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span id="saveBtnText">Archiver la note 🚀</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="w-full lg:w-7/12 flex flex-col bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 lg:flex-none">
+            <div class="p-4 border-b border-slate-200 bg-slate-50/50 shrink-0 z-10 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4">
+                    <span class="text-xl">🗂️</span>
+                    Archives & Recherche
+                </h2>
+                <!-- Filtres -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="col-span-1">
+                        <select id="filterYear" class="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white cursor-pointer shadow-sm" aria-label="Filtrer par année">
+                            <option value="">Toutes les années</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1">
+                        <select id="filterPriority" class="w-full border border-slate-300 rounded-md p-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white cursor-pointer shadow-sm" aria-label="Filtrer par priorité">
+                            <option value="">Toutes les priorités</option>
+                            <option value="court">🔴 Courte (Urgente)</option>
+                            <option value="moyen">🟠 Moyenne</option>
+                            <option value="long">🟢 Longue</option>
+                            <option value="aucune">⚪ Normale</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 relative">
+                        <input type="text" id="searchPerson" placeholder="Rechercher une personne (nom, prénom)..." class="w-full border border-slate-300 rounded-md p-2.5 pl-9 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white shadow-sm" aria-label="Rechercher une personne">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-3 text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                    <div class="col-span-1 sm:col-span-3 relative">
+                        <input type="text" id="searchContent" placeholder="Recherche par mot-clé à l'intérieur des notes... 🔍" class="w-full border border-brand-200 rounded-md p-2.5 pl-9 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-brand-50/30 shadow-sm" aria-label="Recherche dans le contenu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-3 text-brand-400"><path d="M2 12h4l2-9 5 18 2-9h5"/></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1 bg-slate-50/30 relative" id="notesListContainer">
+                <div class="flex flex-col items-center justify-center h-full text-slate-400 py-10 animate-float">
+                    <span class="text-6xl mb-4">🌱</span>
+                    <p class="text-sm font-medium text-slate-500">L'espace est vide. Prêt à cultiver de nouvelles idées ?</p>
+                </div>
+            </div>
+            
+            <div class="p-3 border-t border-slate-200 bg-white/50 text-xs text-slate-600 flex justify-between items-center shrink-0 font-medium">
+                <span id="notesCount" class="bg-slate-100 px-2 py-1 rounded">0 note(s) affichée(s)</span>
+                <div class="flex items-center gap-3">
+                    <button id="btnExportWordList" class="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2.5 py-1.5 rounded transition-colors flex items-center gap-1.5 border border-indigo-200 shadow-sm" title="Imprimer les notes affichées en document Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+                        <span id="exportWordText" class="hidden sm:inline">Imprimer (Word)</span>
+                    </button>
+                    <button id="btnClearFilters" class="text-brand-600 hover:text-brand-800 hover:underline px-2 py-1 transition-colors">Réinitialiser les filtres</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200 shrink-0 z-10">
+        <div class="max-w-screen-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 flex flex-col md:flex-row justify-center items-center gap-1 flex-wrap">
+            <span><strong>LOGI-NOTES</strong> a été conçu avec passion ❤️ par Yannis CHRISTON | 2026.</span>
+            <span>Les données sont exécutées sur le navigateur en local 🔒. Le logiciel respecte la RGPD et a été développé grâce à l'IA générative 🤖.</span>
+        </div>
+    </footer>
+
+    <!-- Boîte de dialogue pour l'exportation multi-format -->
+    <div id="exportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-5 transform transition-all border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-1.5 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-600"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                Exporter les événements & notes
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">Choisissez le format de sortie et le périmètre d'exportation :</p>
+            
+            <!-- Sélection du format -->
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Format de fichier</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-brand-50 hover:border-brand-300 transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/70 has-[:checked]:ring-1 has-[:checked]:ring-brand-500">
+                        <input type="radio" name="exportFormat" value="json" class="sr-only" checked>
+                        <span class="text-base">📦</span>
+                        <span class="text-xs font-bold text-slate-800">JSON</span>
+                        <span class="text-[10px] text-slate-500">Sauvegarde complète</span>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-amber-50 hover:border-amber-300 transition-all has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/70 has-[:checked]:ring-1 has-[:checked]:ring-amber-500">
+                        <input type="radio" name="exportFormat" value="ics" class="sr-only">
+                        <span class="text-base">📅</span>
+                        <span class="text-xs font-bold text-slate-800">iCalendar</span>
+                        <span class="text-[10px] text-slate-500">Outlook / Apple / Google</span>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-emerald-50 hover:border-emerald-300 transition-all has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/70 has-[:checked]:ring-1 has-[:checked]:ring-emerald-500">
+                        <input type="radio" name="exportFormat" value="csv" class="sr-only">
+                        <span class="text-base">📊</span>
+                        <span class="text-xs font-bold text-slate-800">Tableur CSV</span>
+                        <span class="text-[10px] text-slate-500">Excel / LibreOffice</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Périmètre -->
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Périmètre</label>
+                <div class="flex gap-4 text-xs text-slate-700">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="exportScope" value="all" checked class="text-brand-600 focus:ring-brand-500">
+                        <span>Toutes les notes (<span id="exportAllCount">0</span>)</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="exportScope" value="filtered" class="text-brand-600 focus:ring-brand-500">
+                        <span>Notes filtrées (<span id="exportFilteredCount">0</span>)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Nom de fichier -->
+            <div class="mb-5">
+                <label for="exportFilenameInput" class="block text-xs font-semibold text-slate-700 mb-1">Nom du fichier</label>
+                <div class="relative">
+                    <input type="text" id="exportFilenameInput" class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 pr-14 font-mono text-xs">
+                    <span id="exportExtensionLabel" class="absolute right-3 top-2.5 text-xs text-slate-500 font-semibold pointer-events-none">.json</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button id="btnCancelExport" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors focus:ring-2 focus:ring-slate-400">Annuler</button>
+                <button id="btnConfirmExport" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors focus:ring-2 focus:ring-brand-500 shadow-sm flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Télécharger
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Calendrier Global -->
+    <div id="calendarModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-2 sm:p-4 opacity-0 transition-opacity duration-300">
+        <div id="calendarModalContent" class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col transform scale-95 transition-transform duration-300">
+            <!-- Header du calendrier -->
+            <div class="p-3 sm:p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl shrink-0">
+                <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl">📅</span> Calendrier d'Activité
+                </h3>
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="flex items-center gap-1 bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
+                        <button id="btnPrevMonth" class="p-1 sm:p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <span id="calendarMonthYear" class="font-bold text-slate-700 w-28 sm:w-36 text-center capitalize text-xs sm:text-sm"></span>
+                        <button id="btnNextMonth" class="p-1 sm:p-1.5 hover:bg-slate-100 rounded-md transition-colors text-slate-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                    <button id="btnCloseCalendar" class="p-1.5 sm:p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-full transition-colors">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Corps du calendrier -->
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-50/50">
+                <!-- Grille -->
+                <div class="flex-1 flex flex-col p-2 sm:p-4 overflow-hidden">
+                    <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 shrink-0">
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-400">Lun</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-400">Mar</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-400">Mer</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-400">Jeu</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-400">Ven</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-brand-400">Sam</div>
+                        <div class="text-center text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-brand-400">Dim</div>
+                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2 flex-1 auto-rows-[minmax(60px,1fr)] overflow-y-auto pr-1">
+                        <!-- Jours générés par JavaScript -->
+                    </div>
+                    <!-- Légende et Export direct -->
+                    <div class="mt-3 flex flex-wrap gap-3 justify-between items-center text-[10px] sm:text-[11px] text-slate-500 font-medium shrink-0 bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-100 border border-blue-300"></span> Entretien tenu</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-100 border border-amber-300"></span> Rappel programmé</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btnCalendarExportIcs" class="text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded border border-amber-200 transition-colors flex items-center gap-1 font-semibold" title="Exporter tous les événements en iCalendar (.ics)">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                Exporter iCal (.ics)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Panneau latéral de détails -->
+                <div id="calendarSidebar" class="w-full md:w-80 h-1/3 md:h-full border-t md:border-t-0 md:border-l border-slate-200 bg-white p-4 overflow-y-auto hidden flex-col shadow-inner">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2 mb-3 sticky top-0 bg-white z-10">
+                        <h4 id="selectedDayTitle" class="font-bold text-slate-800 text-sm capitalize">Sélectionnez un jour</h4>
+                        <button id="btnCloseSidebar" class="md:hidden text-slate-400 hover:text-slate-700"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                    </div>
+                    <div id="selectedDayEvents" class="flex flex-col gap-2.5">
+                        <!-- Événements injectés ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur de Notifications (Toasts) -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        const LOCAL_STORAGE_KEY = 'logiNote_data_v2';
+        const DRAFT_KEY = 'logiNote_draft_v2';
+        let notes = [];
+        let currentFilteredNotes = [];
+        let editingNoteId = null;
+        
+        // Form Elements
+        const elDate = document.getElementById('dateInput');
+        const elYear = document.getElementById('yearInput');
+        const elName = document.getElementById('nameInput');
+        const elRole = document.getElementById('roleInput');
+        const elTeacherSubjectContainer = document.getElementById('teacherSubjectContainer');
+        const elTeacherSubject = document.getElementById('teacherSubjectInput');
+        const elParentStudentNameContainer = document.getElementById('parentStudentNameContainer');
+        const elParentStudentName = document.getElementById('parentStudentNameInput');
+        const elStudentClassContainer = document.getElementById('studentClassContainer');
+        const elStudentClass = document.getElementById('studentClassInput');
+        const elOtherRoleContainer = document.getElementById('otherRoleContainer');
+        const elOtherRole = document.getElementById('otherRoleInput');
+        const elMotif = document.getElementById('motifInput');
+        const elOtherMotifContainer = document.getElementById('otherMotifContainer');
+        const elOtherMotif = document.getElementById('otherMotifInput');
+        const elStatus = document.getElementById('statusInput');
+        const elReminderContainer = document.getElementById('reminderContainer');
+        const elReminderDate = document.getElementById('reminderDateInput');
+        const elPriority = document.getElementById('priorityInput');
+        
+        const elUrl = document.getElementById('urlInput');
+        const elFile = document.getElementById('fileInput');
+        const elAttachmentPreview = document.getElementById('attachmentPreview');
+        const elAttachmentNameDisplay = document.getElementById('attachmentNameDisplay');
+        const btnRemoveAttachment = document.getElementById('btnRemoveAttachment');
+        let currentAttachmentData = null;
+        let currentAttachmentName = null;
+
+        const formTitle = document.getElementById('formTitle');
+        const elEditor = document.getElementById('editor');
+        const draftStatus = document.getElementById('draftStatus');
+        const btnSaveNote = document.getElementById('btnSaveNote');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnIcon = document.getElementById('saveBtnIcon');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+
+        // Search & List Elements
+        const elFilterYear = document.getElementById('filterYear');
+        const elFilterPriority = document.getElementById('filterPriority');
+        const elSearchPerson = document.getElementById('searchPerson');
+        const elSearchContent = document.getElementById('searchContent');
+        const elNotesList = document.getElementById('notesListContainer');
+        const elNotesCount = document.getElementById('notesCount');
+        const btnClearFilters = document.getElementById('btnClearFilters');
+
+        // Éléments pour le centre de notifications
+        const btnReminders = document.getElementById('btnReminders');
+        const reminderDropdown = document.getElementById('reminderDropdown');
+        const reminderBadge = document.getElementById('reminderBadge');
+        const reminderList = document.getElementById('reminderList');
+        const reminderCountText = document.getElementById('reminderCountText');
+
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+        
+        // Nouvelle fonction pour obtenir la date au format YYYY-MM-DD stricte sur le fuseau local
+        const getLocalDateString = (dateObj = new Date()) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // CORRECTION FUSEAU HORAIRE : Fonction pour parser les dates (YYYY-MM-DD) strictement en heure locale
+        const parseLocalDate = (dateStr) => {
+            if (!dateStr) return new Date();
+            const [year, month, day] = dateStr.split('-');
+            return new Date(year, month - 1, day);
+        };
+
+        const calculateSchoolYear = (dateStr) => {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1; // 1-12
+            // L'année scolaire change en août (mois 8) en France
+            if (month >= 8) return `${year}-${year + 1}`;
+            return `${year - 1}-${year}`;
+        };
+
+        const showToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-red-600' : 'bg-brand-600');
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-xl transform transition-all duration-300 translate-y-full opacity-0 flex items-center gap-3 text-sm font-medium max-w-sm pointer-events-auto`;
+            
+            let icon = type === 'success' 
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('translate-y-full', 'opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        let autosaveTimeout = null;
+        
+        const saveDraft = () => {
+            const draft = {
+                date: elDate.value,
+                year: elYear.value,
+                name: elName.value,
+                role: elRole.value,
+                teacherSubject: elTeacherSubject.value,
+                studentClass: elStudentClass.value,
+                parentStudentName: elParentStudentName.value,
+                otherRole: elOtherRole.value,
+                motif: elMotif.value,
+                otherMotif: elOtherMotif.value,
+                status: elStatus.value,
+                reminderDate: elReminderDate.value,
+                priority: elPriority.value,
+                url: elUrl.value,
+                attachmentData: currentAttachmentData,
+                attachmentName: currentAttachmentName,
+                content: elEditor.innerHTML
+            };
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            
+            draftStatus.textContent = "Brouillon sauvegardé";
+            draftStatus.classList.remove('opacity-0');
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(() => draftStatus.classList.add('opacity-0'), 2500);
+        };
+
+        const loadDraft = () => {
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+                if (draft) {
+                    if (draft.date) elDate.value = draft.date;
+                    if (draft.year) elYear.value = draft.year;
+                    if (draft.name) elName.value = draft.name;
+                    if (draft.role) {
+                        elRole.value = draft.role;
+                        toggleRoleSpecificFields();
+                    }
+                    if (draft.teacherSubject) elTeacherSubject.value = draft.teacherSubject;
+                    if (draft.studentClass) elStudentClass.value = draft.studentClass;
+                    if (draft.parentStudentName) elParentStudentName.value = draft.parentStudentName;
+                    if (draft.otherRole) elOtherRole.value = draft.otherRole;
+                    if (draft.motif) {
+                        elMotif.value = draft.motif;
+                        toggleOtherMotif();
+                    }
+                    if (draft.otherMotif) elOtherMotif.value = draft.otherMotif;
+                    if (draft.status) {
+                        elStatus.value = draft.status;
+                        toggleReminder();
+                    }
+                    if (draft.reminderDate) elReminderDate.value = draft.reminderDate;
+                    if (draft.priority) elPriority.value = draft.priority;
+                    if (draft.url) elUrl.value = draft.url;
+                    if (draft.attachmentData) {
+                        currentAttachmentData = draft.attachmentData;
+                        currentAttachmentName = draft.attachmentName;
+                        updateAttachmentUI();
+                    }
+                    if (draft.content) elEditor.innerHTML = draft.content;
+                } else {
+                    initDefaultValues();
+                }
+            } catch (e) {
+                initDefaultValues();
+            }
+        };
+
+        const initDefaultValues = () => {
+            const today = getLocalDateString();
+            elDate.value = today;
+            elYear.value = calculateSchoolYear(today);
+        };
+
+        const clearDraft = () => {
+            localStorage.removeItem(DRAFT_KEY);
+            elName.value = '';
+            elRole.value = 'Professeur';
+            elTeacherSubject.value = '';
+            elStudentClass.value = '';
+            elParentStudentName.value = '';
+            elOtherRole.value = '';
+            elMotif.value = '';
+            elOtherMotif.value = '';
+            elStatus.value = 'en_cours';
+            elReminderDate.value = '';
+            elPriority.value = 'aucune';
+            elUrl.value = '';
+            currentAttachmentData = null;
+            currentAttachmentName = null;
+            updateAttachmentUI();
+            elEditor.innerHTML = '';
+            toggleRoleSpecificFields();
+            toggleOtherMotif();
+            toggleReminder();
+            initDefaultValues();
+        };
+
+        [elDate, elYear, elName, elRole, elOtherRole, elTeacherSubject, elStudentClass, elParentStudentName, elStatus, elReminderDate, elPriority, elUrl, elMotif, elOtherMotif].forEach(el => {
+            el.addEventListener('input', saveDraft);
+            el.addEventListener('change', saveDraft);
+        });
+        elEditor.addEventListener('input', saveDraft);
+
+        elFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 1.5 * 1024 * 1024) {
+                showToast('Le fichier dépasse la limite de 1.5 Mo.', 'error');
+                elFile.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentAttachmentData = event.target.result;
+                currentAttachmentName = file.name;
+                updateAttachmentUI();
+                saveDraft();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnRemoveAttachment.addEventListener('click', () => {
+            currentAttachmentData = null;
+            currentAttachmentName = null;
+            elFile.value = '';
+            updateAttachmentUI();
+            saveDraft();
+        });
+
+        const updateAttachmentUI = () => {
+            if (currentAttachmentData) {
+                elFile.classList.add('hidden');
+                elAttachmentPreview.classList.remove('hidden');
+                elAttachmentPreview.classList.add('flex');
+                elAttachmentNameDisplay.textContent = currentAttachmentName;
+            } else {
+                elFile.classList.remove('hidden');
+                elAttachmentPreview.classList.add('hidden');
+                elAttachmentPreview.classList.remove('flex');
+                elFile.value = '';
+            }
+        };
+
+        const toggleRoleSpecificFields = () => {
+            elOtherRoleContainer.classList.add('hidden');
+            elTeacherSubjectContainer.classList.add('hidden');
+            elStudentClassContainer.classList.add('hidden');
+            elParentStudentNameContainer.classList.add('hidden');
+            
+            if (elRole.value === 'Autre') elOtherRoleContainer.classList.remove('hidden');
+            else elOtherRole.value = ''; 
+            
+            if (elRole.value === 'Professeur') elTeacherSubjectContainer.classList.remove('hidden');
+            else elTeacherSubject.value = '';
+            
+            if (elRole.value === 'Élève' || elRole.value === 'Parent') elStudentClassContainer.classList.remove('hidden');
+            else elStudentClass.value = '';
+
+            if (elRole.value === 'Parent') elParentStudentNameContainer.classList.remove('hidden');
+            else elParentStudentName.value = '';
+        };
+        elRole.addEventListener('change', toggleRoleSpecificFields);
+
+        const toggleOtherMotif = () => {
+            if (elMotif.value === 'Autre') elOtherMotifContainer.classList.remove('hidden');
+            else {
+                elOtherMotifContainer.classList.add('hidden');
+                elOtherMotif.value = '';
+            }
+        };
+        if(elMotif) elMotif.addEventListener('change', toggleOtherMotif);
+
+        const toggleReminder = () => {
+            if (elStatus.value === 'rappel') elReminderContainer.classList.remove('hidden');
+            else {
+                elReminderContainer.classList.add('hidden');
+                elReminderDate.value = '';
+            }
+        };
+        elStatus.addEventListener('change', toggleReminder);
+
+        elDate.addEventListener('change', (e) => {
+            elYear.value = calculateSchoolYear(e.target.value);
+            saveDraft();
+        });
+
+        document.querySelectorAll('.editor-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const cmd = btn.getAttribute('data-cmd');
+                const arg = btn.getAttribute('data-arg') || null;
+                document.execCommand(cmd, false, arg);
+                elEditor.focus();
+                saveDraft();
+            });
+        });
+
+        document.querySelectorAll('.editor-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const cmd = select.getAttribute('data-cmd');
+                document.execCommand(cmd, false, select.value);
+                elEditor.focus();
+                saveDraft();
+            });
+        });
+
+        document.querySelectorAll('.editor-color').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const cmd = input.getAttribute('data-cmd');
+                document.execCommand(cmd, false, input.value);
+                elEditor.focus();
+                saveDraft();
+            });
+        });
+
+        elEditor.addEventListener("paste", function(e) {
+            e.preventDefault();
+            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+
+        const resetEditMode = () => {
+            editingNoteId = null;
+            formTitle.innerHTML = `<span class="text-xl">📝</span> Nouvelle Note`;
+            saveBtnText.textContent = "Archiver la note 🚀";
+            saveBtnIcon.innerHTML = `<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>`;
+            btnSaveNote.classList.remove('from-amber-500', 'to-amber-400', 'hover:from-amber-600', 'hover:to-amber-500', 'focus:ring-amber-500');
+            btnSaveNote.classList.add('from-brand-600', 'to-brand-500', 'hover:from-brand-700', 'hover:to-brand-600', 'focus:ring-brand-500');
+            btnCancelEdit.classList.add('hidden');
+        };
+
+        btnCancelEdit.addEventListener('click', () => {
+            resetEditMode();
+            clearDraft();
+            showToast('Modification annulée.', 'brand');
+        });
+
+        btnSaveNote.addEventListener('click', () => {
+            if (!elDate.value || !elYear.value || !elName.value.trim()) {
+                showToast('Veuillez remplir la date, l\'année et le nom.', 'error');
+                return;
+            }
+            if (elEditor.innerHTML.trim() === '' || elEditor.innerHTML === '<br>') {
+                showToast('Le contenu de la note est vide.', 'error');
+                return;
+            }
+
+            if (editingNoteId) {
+                const noteIndex = notes.findIndex(n => n.id === editingNoteId);
+                if (noteIndex > -1) {
+                    notes[noteIndex] = {
+                        ...notes[noteIndex], 
+                        date: elDate.value,
+                        year: elYear.value,
+                        name: elName.value.trim(),
+                        role: elRole.value,
+                        teacherSubject: elRole.value === 'Professeur' ? elTeacherSubject.value.trim() : null,
+                        studentClass: (elRole.value === 'Élève' || elRole.value === 'Parent') ? elStudentClass.value.trim() : null,
+                        parentStudentName: elRole.value === 'Parent' ? elParentStudentName.value.trim() : null,
+                        customRole: elRole.value === 'Autre' ? elOtherRole.value.trim() : null,
+                        motif: elMotif.value,
+                        customMotif: elMotif.value === 'Autre' ? elOtherMotif.value.trim() : null,
+                        status: elStatus.value,
+                        reminderDate: elStatus.value === 'rappel' ? elReminderDate.value : null,
+                        priority: elPriority.value,
+                        url: elUrl.value.trim(),
+                        attachmentData: currentAttachmentData,
+                        attachmentName: currentAttachmentName,
+                        content: elEditor.innerHTML,
+                        lastModified: Date.now()
+                    };
+                    showToast('Note mise à jour avec succès !');
+                }
+                resetEditMode();
+            } else {
+                const newNote = {
+                    id: generateId(),
+                    date: elDate.value,
+                    year: elYear.value,
+                    name: elName.value.trim(),
+                    role: elRole.value,
+                    teacherSubject: elRole.value === 'Professeur' ? elTeacherSubject.value.trim() : null,
+                    studentClass: (elRole.value === 'Élève' || elRole.value === 'Parent') ? elStudentClass.value.trim() : null,
+                    parentStudentName: elRole.value === 'Parent' ? elParentStudentName.value.trim() : null,
+                    customRole: elRole.value === 'Autre' ? elOtherRole.value.trim() : null,
+                    motif: elMotif.value,
+                    customMotif: elMotif.value === 'Autre' ? elOtherMotif.value.trim() : null,
+                    status: elStatus.value,
+                    reminderDate: elStatus.value === 'rappel' ? elReminderDate.value : null,
+                    priority: elPriority.value,
+                    url: elUrl.value.trim(),
+                    attachmentData: currentAttachmentData,
+                    attachmentName: currentAttachmentName,
+                    content: elEditor.innerHTML,
+                    timestamp: Date.now()
+                };
+                notes.unshift(newNote);
+                showToast('Note archivée avec succès !');
+            }
+
+            saveNotesToStorage();
+            clearDraft();
+            updateDashboard();
+        });
+
+        const saveNotesToStorage = () => {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(notes));
+                populateYearFilter();
+                updateDatalists();
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showToast("Espace de stockage local saturé par les pièces jointes ! Pensez à exporter vos archives.", "error");
+                } else {
+                    showToast("Erreur lors de la sauvegarde.", "error");
+                }
+            }
+        };
+
+        const loadNotes = () => {
+            try {
+                const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (stored) notes = JSON.parse(stored);
+            } catch (e) {
+                notes = [];
+            }
+            populateYearFilter();
+            updateDatalists();
+            updateDashboard();
+        };
+
+        const updateDatalists = () => {
+            const names = new Set();
+            const subjects = new Set();
+            const classes = new Set();
+            const otherRoles = new Set();
+
+            notes.forEach(n => {
+                if (n.name) names.add(n.name.trim());
+                if (n.teacherSubject) subjects.add(n.teacherSubject.trim());
+                if (n.studentClass) classes.add(n.studentClass.trim());
+                if (n.parentStudentName) names.add(n.parentStudentName.trim());
+                if (n.customRole) otherRoles.add(n.customRole.trim());
+            });
+
+            const populateList = (id, set) => {
+                const list = document.getElementById(id);
+                if (list) {
+                    list.innerHTML = '';
+                    Array.from(set).sort().forEach(val => {
+                        if (val) {
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            list.appendChild(opt);
+                        }
+                    });
+                }
+            };
+
+            populateList('namesList', names);
+            populateList('subjectsList', subjects);
+            populateList('classesList', classes);
+            populateList('otherRolesList', otherRoles);
+        };
+
+        const populateYearFilter = () => {
+            const years = [...new Set(notes.map(n => n.year))].sort().reverse();
+            const currentVal = elFilterYear.value;
+            
+            elFilterYear.innerHTML = '<option value="">Toutes les années</option>';
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                elFilterYear.appendChild(opt);
+            });
+            if (years.includes(currentVal)) elFilterYear.value = currentVal;
+        };
+
+        const stripHtml = (html) => {
+            const tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+        };
+
+        // Fonction pour mettre à jour le panneau de notifications
+        const updateRemindersNotification = () => {
+            // Filtrer uniquement les notes avec un statut "rappel" ET une date saisie
+            const reminders = notes.filter(n => n.status === 'rappel' && n.reminderDate);
+            
+            // Trier par date la plus proche en premier
+            reminders.sort((a, b) => parseLocalDate(a.reminderDate) - parseLocalDate(b.reminderDate));
+
+            const count = reminders.length;
+            
+            // Affichage du badge rouge
+            if (count > 0) {
+                reminderBadge.textContent = count;
+                reminderBadge.classList.remove('hidden');
+                reminderBadge.classList.add('flex');
+            } else {
+                reminderBadge.classList.add('hidden');
+                reminderBadge.classList.remove('flex');
+            }
+            
+            reminderCountText.textContent = count;
+            reminderList.innerHTML = '';
+
+            // Cas : aucun rappel
+            if (count === 0) {
+                reminderList.innerHTML = `
+                    <div class="p-4 text-center text-sm text-slate-500 flex flex-col items-center gap-2">
+                        <span class="text-2xl mb-1">☕</span>
+                        Aucun rappel programmé pour le moment.
+                    </div>
+                `;
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            // Génération des cartes de rappel
+            reminders.forEach(n => {
+                const remDate = parseLocalDate(n.reminderDate);
+                const dateStr = remDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                let isPast = remDate < today;
+                let isToday = remDate.getTime() === today.getTime();
+                
+                let statusClass = 'bg-amber-50 border-amber-100 hover:bg-amber-100';
+                let dateBadge = 'bg-amber-100 text-amber-700 border border-amber-200';
+
+                // Formatage si date dépassée ou aujourd'hui
+                if (isPast) {
+                    statusClass = 'bg-red-50 border-red-100 hover:bg-red-100';
+                    dateBadge = 'bg-red-100 text-red-700 border border-red-200';
+                } else if (isToday) {
+                    statusClass = 'bg-orange-50 border-orange-100 hover:bg-orange-100';
+                    dateBadge = 'bg-orange-100 text-orange-700 border border-orange-200 animate-pulse';
+                }
+
+                let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
+                else if (n.role === 'Élève' && n.studentClass) displayRole += ` (${n.studentClass})`;
+                else if (n.role === 'Parent') {
+                    let parentInfo = [];
+                    if (n.parentStudentName) parentInfo.push(n.parentStudentName);
+                    if (n.studentClass) parentInfo.push(n.studentClass);
+                    if (parentInfo.length > 0) displayRole += ` (Enfant : ${parentInfo.join(' - ')})`;
+                }
+
+                const item = document.createElement('div');
+                item.className = `p-2.5 rounded-lg border ${statusClass} transition-colors cursor-pointer text-left shadow-sm`;
+                item.title = "Cliquez pour voir le dossier de cette personne";
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-1 gap-2">
+                        <div class="font-bold text-slate-800 text-sm truncate flex-1">${n.name}</div>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${dateBadge} whitespace-nowrap shrink-0">${dateStr}</span>
+                    </div>
+                    <div class="text-xs font-medium text-slate-600 truncate">${displayRole}</div>
+                `;
+
+                // Action au clic : recherche automatiquement la personne
+                item.addEventListener('click', () => {
+                    document.getElementById('searchPerson').value = n.name;
+                    updateDashboard();
+                    reminderDropdown.classList.add('hidden');
+                });
+
+                reminderList.appendChild(item);
+            });
+        };
+
+        // Gestion de l'ouverture/fermeture du menu cloche
+        btnReminders.addEventListener('click', (e) => {
+            e.stopPropagation();
+            reminderDropdown.classList.toggle('hidden');
+        });
+
+        // Fermer le menu si on clique ailleurs sur la page
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('reminderDropdownContainer').contains(e.target)) {
+                reminderDropdown.classList.add('hidden');
+            }
+        });
+
+        const updateDashboard = () => {
+            const fYear = elFilterYear.value;
+            const fPriority = elFilterPriority.value;
+            const fPerson = elSearchPerson.value.toLowerCase().trim();
+            const fContent = elSearchContent.value.toLowerCase().trim();
+
+            currentFilteredNotes = notes.filter(n => {
+                const matchYear = fYear === '' || n.year === fYear;
+                const notePriority = n.priority || 'aucune';
+                const matchPriority = fPriority === '' || notePriority === fPriority;
+                const matchPerson = fPerson === '' || n.name.toLowerCase().includes(fPerson);
+                const textContent = stripHtml(n.content).toLowerCase();
+                const matchContent = fContent === '' || textContent.includes(fContent);
+                return matchYear && matchPriority && matchPerson && matchContent;
+            });
+
+            currentFilteredNotes.sort((a, b) => {
+                if(a.date !== b.date) return parseLocalDate(b.date) - parseLocalDate(a.date);
+                return b.timestamp - a.timestamp;
+            });
+
+            renderNotes(currentFilteredNotes, fPerson, fContent);
+            elNotesCount.textContent = `${currentFilteredNotes.length} note(s) affichée(s)`;
+
+            // Mise à jour de la cloche des notifications à chaque changement de données
+            updateRemindersNotification();
+
+            const btnExportList = document.getElementById('btnExportWordList');
+            const exportText = document.getElementById('exportWordText');
+            if (currentFilteredNotes.length === 0) {
+                btnExportList.style.display = 'none';
+            } else {
+                btnExportList.style.display = 'flex';
+                if (fPerson) {
+                    const personDisplay = fPerson.charAt(0).toUpperCase() + fPerson.slice(1);
+                    exportText.textContent = `Imprimer le dossier`;
+                    btnExportList.title = `Imprimer le dossier Word de ${personDisplay} (${currentFilteredNotes.length} notes)`;
+                } else {
+                    exportText.textContent = `Imprimer (Word)`;
+                    btnExportList.title = `Imprimer les notes affichées en document Word`;
+                }
+            }
+        };
+
+        const renderNotes = (notesToRender, highlightPerson = '', highlightContent = '') => {
+            elNotesList.innerHTML = '';
+            
+            if (notesToRender.length === 0) {
+                elNotesList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400 py-10 animate-float">
+                        <span class="text-6xl mb-4 opacity-70">🕵️‍♂️</span>
+                        <p class="text-sm font-medium text-slate-500">Aucun résultat trouvé. Peut-être une autre piste ? 💡</p>
+                    </div>`;
+                return;
+            }
+
+            const highlightText = (text, query) => {
+                if (!query) return text;
+                const safeQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(`(${safeQuery})`, 'gi');
+                return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+            };
+
+            notesToRender.forEach(n => {
+                let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
+                else if (n.role === 'Élève' && n.studentClass) displayRole += ` (${n.studentClass})`;
+                else if (n.role === 'Parent') {
+                    let parentInfo = [];
+                    if (n.parentStudentName) parentInfo.push(n.parentStudentName);
+                    if (n.studentClass) parentInfo.push(n.studentClass);
+                    if (parentInfo.length > 0) displayRole += ` (Enfant : ${parentInfo.join(' - ')})`;
+                }
+                
+                let statusBadge = '';
+                if (n.status === 'cloture') {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Clôturé</span>`;
+                } else if (n.status === 'rappel') {
+                    const reminderStr = n.reminderDate ? parseLocalDate(n.reminderDate).toLocaleDateString('fr-FR') : 'À définir';
+                    const isPast = n.reminderDate && parseLocalDate(n.reminderDate) < new Date(new Date().setHours(0,0,0,0));
+                    const badgeColor = isPast ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200';
+                    const iconColor = isPast ? 'text-red-500' : 'text-amber-500';
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${badgeColor} border flex items-center gap-1" title="Rappel prévu le ${reminderStr}"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="${iconColor}"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Rappel : ${reminderStr}</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg> En cours</span>`;
+                }
+                
+                let priorityBadge = '';
+                if (n.priority === 'court') priorityBadge = `<span class="flex items-center justify-center w-5 h-5 rounded-full bg-red-100 border border-red-200 cursor-help transition-transform hover:scale-110" title="Priorité : Court terme"><span class="w-2.5 h-2.5 rounded-full bg-red-600 shadow-sm"></span></span>`;
+                else if (n.priority === 'moyen') priorityBadge = `<span class="flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 border border-orange-200 cursor-help transition-transform hover:scale-110" title="Priorité : Moyen terme"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"></span></span>`;
+                else if (n.priority === 'long') priorityBadge = `<span class="flex items-center justify-center w-5 h-5 rounded-full bg-green-100 border border-green-200 cursor-help transition-transform hover:scale-110" title="Priorité : Long terme"><span class="w-2.5 h-2.5 rounded-full bg-green-600 shadow-sm"></span></span>`;
+
+                let motifBadge = '';
+                if (n.motif) {
+                    const displayMotif = n.motif === 'Autre' ? (n.customMotif || 'Autre motif') : n.motif;
+                    motifBadge = `<span class="px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> ${displayMotif}</span>`;
+                }
+
+                const dateObj = parseLocalDate(n.date);
+                const dateStr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                const card = document.createElement('article');
+                card.className = "bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-slate-200 mb-4 hover:shadow-md transition-shadow group";
+                
+                card.innerHTML = `
+                    <div class="flex flex-wrap justify-between items-start gap-3 mb-3 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg leading-tight">${highlightText(n.name, highlightPerson)}</h3>
+                            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                                ${statusBadge}
+                                ${priorityBadge}
+                                <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-100">${displayRole}</span>
+                                ${motifBadge}
+                                <span class="px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">${n.year}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold text-slate-700 capitalize flex items-center justify-end gap-1.5">
+                                <button class="edit-single-note text-amber-500 hover:text-amber-700 hover:bg-amber-50 p-1.5 rounded-md transition-colors border border-transparent hover:border-amber-200" data-id="${n.id}" title="Modifier cette note">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                                </button>
+                                <button class="export-single-word text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 p-1.5 rounded-md transition-colors border border-transparent hover:border-indigo-200" data-id="${n.id}" title="Imprimer cette note (Word)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M2 15h10"/><path d="m9 18 3-3-3-3"/></svg>
+                                </button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 ml-1"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                ${dateStr}
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-1">
+                                Saisi le ${new Date(n.timestamp).toLocaleDateString('fr-FR', {hour: '2-digit', minute:'2-digit'})}
+                                ${n.lastModified ? `<br><span class="italic text-slate-300">Modifié le ${new Date(n.lastModified).toLocaleDateString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prose prose-sm max-w-none text-slate-700 bg-slate-50/50 p-3 rounded-md border border-slate-100 note-content-display">
+                        ${n.content}
+                    </div>
+                    ${(n.url || n.attachmentData) ? `
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-2">
+                        ${n.url ? `<a href="${n.url.startsWith('http') ? n.url : 'https://'+n.url}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800 hover:underline bg-brand-50 px-2.5 py-1.5 rounded-md transition-colors border border-brand-100 shadow-sm" title="Ouvrir le lien">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            Lien URL
+                        </a>` : ''}
+                        ${n.attachmentData ? `<a href="${n.attachmentData}" download="${n.attachmentName}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50 px-2.5 py-1.5 rounded-md transition-colors border border-indigo-100 shadow-sm" title="Télécharger la pièce jointe">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            ${n.attachmentName}
+                        </a>` : ''}
+                    </div>
+                    ` : ''}
+                `;
+                
+                if (highlightContent) {
+                    const contentDiv = card.querySelector('.note-content-display');
+                    const safeQuery = highlightContent.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    const regex = new RegExp(`(${safeQuery})`, 'gi');
+                    
+                    const walkDOM = (node) => {
+                        if (node.nodeType === 3) { 
+                            const text = node.nodeValue;
+                            if (regex.test(text)) {
+                                const span = document.createElement('span');
+                                span.innerHTML = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+                                node.parentNode.replaceChild(span, node);
+                            }
+                        } else if (node.nodeType === 1 && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
+                            Array.from(node.childNodes).forEach(walkDOM);
+                        }
+                    };
+                    walkDOM(contentDiv);
+                }
+
+                elNotesList.appendChild(card);
+            });
+        };
+
+        [elFilterYear, elFilterPriority, elSearchPerson, elSearchContent].forEach(el => el.addEventListener('input', updateDashboard));
+
+        btnClearFilters.addEventListener('click', () => {
+            elFilterYear.value = '';
+            elFilterPriority.value = '';
+            elSearchPerson.value = '';
+            elSearchContent.value = '';
+            updateDashboard();
+        });
+
+        const btnMic = document.getElementById('btnMic');
+        const micStatusText = document.getElementById('micStatusText');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                isRecording = true;
+                btnMic.classList.add('mic-active');
+                micStatusText.textContent = 'Écoute en cours...';
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                }
+                if (finalTranscript !== '') {
+                    elEditor.focus();
+                    const currentHtml = elEditor.innerHTML;
+                    const prefix = currentHtml === '' || currentHtml.endsWith('&nbsp;') || currentHtml.endsWith(' ') ? '' : ' ';
+                    document.execCommand('insertText', false, prefix + finalTranscript + ' ');
+                    saveDraft();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                stopDictation();
+                if (event.error !== 'no-speech') showToast('Erreur du micro : ' + event.error, 'error');
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    try { recognition.start(); } catch(e) { stopDictation(false); }
+                } else {
+                    stopDictation(false);
+                }
+            };
+
+            const stopDictation = (forceStop = true) => {
+                if(forceStop) isRecording = false;
+                if(recognition) recognition.stop();
+                btnMic.classList.remove('mic-active');
+                micStatusText.textContent = 'Dictée vocale';
+            };
+
+            btnMic.addEventListener('click', () => {
+                if (isRecording) stopDictation();
+                else {
+                    try { recognition.start(); } 
+                    catch (e) { showToast('Impossible de démarrer le micro.', 'error'); }
+                }
+            });
+        } else {
+            btnMic.addEventListener('click', () => {
+                showToast("Votre navigateur actuel ou l'environnement ne supporte pas la dictée vocale. Privilégiez Google Chrome ou Edge.", "error");
+            });
+            btnMic.classList.remove('text-emerald-700', 'bg-emerald-50', 'border-emerald-300', 'hover:bg-emerald-100', 'hover:border-emerald-400');
+            btnMic.classList.add('text-slate-400', 'bg-slate-100', 'border-slate-200', 'cursor-not-allowed', 'opacity-70');
+            micStatusText.textContent = 'Micro non supporté';
+        }
+
+        const btnExport = document.getElementById('btnExport');
+        const btnImport = document.getElementById('btnImport');
+        const importFile = document.getElementById('importFile');
+        
+        const exportModal = document.getElementById('exportModal');
+        const exportFilenameInput = document.getElementById('exportFilenameInput');
+        const exportExtensionLabel = document.getElementById('exportExtensionLabel');
+        const exportAllCount = document.getElementById('exportAllCount');
+        const exportFilteredCount = document.getElementById('exportFilteredCount');
+        const btnCancelExport = document.getElementById('btnCancelExport');
+        const btnConfirmExport = document.getElementById('btnConfirmExport');
+        const btnCalendarExportIcs = document.getElementById('btnCalendarExportIcs');
+
+        const btnCalendar = document.getElementById('btnCalendar');
+        const calendarModal = document.getElementById('calendarModal');
+        const calendarModalContent = document.getElementById('calendarModalContent');
+        const btnCloseCalendar = document.getElementById('btnCloseCalendar');
+        const btnPrevMonth = document.getElementById('btnPrevMonth');
+        const btnNextMonth = document.getElementById('btnNextMonth');
+        const calendarMonthYear = document.getElementById('calendarMonthYear');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calendarSidebar = document.getElementById('calendarSidebar');
+        const selectedDayTitle = document.getElementById('selectedDayTitle');
+        const selectedDayEvents = document.getElementById('selectedDayEvents');
+        const btnCloseSidebar = document.getElementById('btnCloseSidebar');
+        
+        let currentCalendarDate = new Date();
+        let selectedDateString = null;
+
+        const getDefaultExportFilename = (format = 'json') => {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const prefix = format === 'ics' ? 'CALENDRIER' : (format === 'csv' ? 'TABLEUR' : 'LOGINOTE');
+            return `${prefix}_${dd}${mm}${yyyy}_${hh}h${min}`;
+        };
+
+        // Générateur de fichier standard iCalendar (RFC 5545) compatible Outlook, Apple Calendar, Google Agenda
+        const generateICS = (notesList) => {
+            const nowStr = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            
+            const escapeICS = (str) => {
+                if (!str) return '';
+                return str
+                    .replace(/\\/g, '\\\\')
+                    .replace(/;/g, '\\;')
+                    .replace(/,/g, '\\,')
+                    .replace(/\r?\n/g, '\\n');
+            };
+
+            const cleanTextForICS = (html) => {
+                if (!html) return '';
+                let text = html.replace(/<br\s*[\/]?>/gi, '\n')
+                               .replace(/<\/p>/gi, '\n')
+                               .replace(/<\/li>/gi, '\n')
+                               .replace(/<[^>]+>/gi, '');
+                const tmp = document.createElement("textarea");
+                tmp.innerHTML = text;
+                return tmp.value.trim();
+            };
+
+            let ics = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//PERDIRFORMANCE LOGI-NOTE V1//FR',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'X-WR-CALNAME:LogiNote - Suivi EPLE'
+            ];
+
+            notesList.forEach(n => {
+                const dateClean = (n.date || '').replace(/-/g, '');
+                if (!dateClean || dateClean.length !== 8) return;
+
+                let roleDisplay = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) roleDisplay += ` (${n.teacherSubject})`;
+                else if (n.role === 'Élève' && n.studentClass) roleDisplay += ` (${n.studentClass})`;
+                else if (n.role === 'Parent') {
+                    let parentInfo = [];
+                    if (n.parentStudentName) parentInfo.push(n.parentStudentName);
+                    if (n.studentClass) parentInfo.push(n.studentClass);
+                    if (parentInfo.length > 0) roleDisplay += ` (Enfant: ${parentInfo.join(' - ')})`;
+                }
+
+                let motifDisplay = n.motif === 'Autre' ? (n.customMotif || '') : (n.motif || '');
+                let summary = `Entretien: ${n.name} [${roleDisplay}]`;
+                if (motifDisplay) summary += ` - ${motifDisplay}`;
+
+                let plainContent = cleanTextForICS(n.content);
+                let descParts = [
+                    `Personne: ${n.name}`,
+                    `Qualité: ${roleDisplay}`,
+                    `Année scolaire: ${n.year || ''}`,
+                    motifDisplay ? `Motif: ${motifDisplay}` : null,
+                    `Statut: ${n.status === 'cloture' ? 'Clôturé' : (n.status === 'rappel' ? 'À rappeler' : 'En cours')}`,
+                    n.priority && n.priority !== 'aucune' ? `Priorité: ${n.priority}` : null,
+                    n.url ? `Lien URL: ${n.url}` : null,
+                    '',
+                    '--- COMPTE RENDU ---',
+                    plainContent
+                ].filter(p => p !== null).join('\n');
+
+                let priorityVal = '0';
+                if (n.priority === 'court') priorityVal = '1';
+                else if (n.priority === 'moyen') priorityVal = '5';
+                else if (n.priority === 'long') priorityVal = '9';
+
+                // Événement principal d'entretien
+                ics.push('BEGIN:VEVENT');
+                ics.push(`UID:${n.id}-rdv@loginote`);
+                ics.push(`DTSTAMP:${nowStr}`);
+                ics.push(`DTSTART;VALUE=DATE:${dateClean}`);
+                ics.push(`DTEND;VALUE=DATE:${dateClean}`);
+                ics.push(`SUMMARY:${escapeICS(summary)}`);
+                ics.push(`DESCRIPTION:${escapeICS(descParts)}`);
+                ics.push(`PRIORITY:${priorityVal}`);
+                ics.push('STATUS:CONFIRMED');
+                ics.push('TRANSP:TRANSPARENT');
+                ics.push('END:VEVENT');
+
+                // Événement séparé pour le rappel si programmé
+                if (n.status === 'rappel' && n.reminderDate) {
+                    const reminderClean = n.reminderDate.replace(/-/g, '');
+                    if (reminderClean && reminderClean.length === 8) {
+                        ics.push('BEGIN:VEVENT');
+                        ics.push(`UID:${n.id}-rappel@loginote`);
+                        ics.push(`DTSTAMP:${nowStr}`);
+                        ics.push(`DTSTART;VALUE=DATE:${reminderClean}`);
+                        ics.push(`DTEND;VALUE=DATE:${reminderClean}`);
+                        ics.push(`SUMMARY:${escapeICS(`🔔 RAPPEL: ${n.name} [${roleDisplay}]`)}`);
+                        ics.push(`DESCRIPTION:${escapeICS(`Rappel concernant l'entretien du ${n.date}.\nMotif: ${motifDisplay}\n\n${plainContent}`)}`);
+                        ics.push('PRIORITY:1');
+                        ics.push('STATUS:CONFIRMED');
+                        ics.push('END:VEVENT');
+                    }
+                }
+            });
+
+            ics.push('END:VCALENDAR');
+            return ics.join('\r\n');
+        };
+
+        // Générateur de fichier Tableur CSV (avec point-virgule et BOM UTF-8 pour Excel FR)
+        const generateCSV = (notesList) => {
+            const cleanTextForCSV = (html) => {
+                if (!html) return '';
+                let text = html.replace(/<br\s*[\/]?>/gi, ' ')
+                               .replace(/<\/p>/gi, ' ')
+                               .replace(/<[^>]+>/gi, '');
+                const tmp = document.createElement("textarea");
+                tmp.innerHTML = text;
+                return tmp.value.trim().replace(/\s+/g, ' ');
+            };
+
+            const escapeCSV = (val) => {
+                if (val === null || val === undefined) return '""';
+                let str = String(val).replace(/"/g, '""');
+                return `"${str}"`;
+            };
+
+            const headers = [
+                "ID", "Date", "Annee_Scolaire", "Nom_Prenom", "Qualite", 
+                "Matiere_ou_Classe_ou_Enfant", "Motif", "Statut", 
+                "Date_Rappel", "Priorite", "Lien_URL", "Piece_Jointe", "Contenu_Note"
+            ];
+
+            let csvRows = [headers.map(escapeCSV).join(';')];
+
+            notesList.forEach(n => {
+                let specInfo = '';
+                if (n.role === 'Professeur') specInfo = n.teacherSubject || '';
+                else if (n.role === 'Élève') specInfo = n.studentClass || '';
+                else if (n.role === 'Parent') specInfo = [n.parentStudentName, n.studentClass].filter(Boolean).join(' - ');
+                else if (n.role === 'Autre') specInfo = n.customRole || '';
+
+                let motifDisplay = n.motif === 'Autre' ? (n.customMotif || 'Autre') : (n.motif || '');
+
+                const row = [
+                    n.id,
+                    n.date || '',
+                    n.year || '',
+                    n.name || '',
+                    n.role || '',
+                    specInfo,
+                    motifDisplay,
+                    n.status || 'en_cours',
+                    n.reminderDate || '',
+                    n.priority || 'aucune',
+                    n.url || '',
+                    n.attachmentName || '',
+                    cleanTextForCSV(n.content)
+                ];
+                csvRows.push(row.map(escapeCSV).join(';'));
+            });
+
+            // BOM UTF-8 (\ufeff) pour forcer Excel à afficher les accents français impeccablement
+            return '\ufeff' + csvRows.join('\r\n');
+        };
+
+        // Gestion de l'ouverture et des options de la modale d'export
+        btnExport.addEventListener('click', () => {
+            if (notes.length === 0) {
+                showToast('Aucune donnée à exporter.', 'error');
+                return;
+            }
+            exportAllCount.textContent = notes.length;
+            exportFilteredCount.textContent = currentFilteredNotes.length;
+            
+            const selectedFormat = document.querySelector('input[name="exportFormat"]:checked')?.value || 'json';
+            exportFilenameInput.value = getDefaultExportFilename(selectedFormat);
+            exportExtensionLabel.textContent = `.${selectedFormat}`;
+            
+            exportModal.classList.remove('hidden');
+            exportFilenameInput.focus();
+            exportFilenameInput.select();
+        });
+
+        document.querySelectorAll('input[name="exportFormat"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const fmt = e.target.value;
+                exportExtensionLabel.textContent = `.${fmt}`;
+                exportFilenameInput.value = getDefaultExportFilename(fmt);
+            });
+        });
+
+        const closeExportModal = () => {
+            exportModal.classList.add('hidden');
+        };
+
+        btnCancelExport.addEventListener('click', closeExportModal);
+
+        btnConfirmExport.addEventListener('click', () => {
+            closeExportModal();
+            
+            const format = document.querySelector('input[name="exportFormat"]:checked')?.value || 'json';
+            const scope = document.querySelector('input[name="exportScope"]:checked')?.value || 'all';
+            const listToExport = scope === 'filtered' ? currentFilteredNotes : notes;
+
+            if (listToExport.length === 0) {
+                showToast('Aucune note à exporter dans le périmètre sélectionné.', 'error');
+                return;
+            }
+
+            let filename = exportFilenameInput.value.trim();
+            if (!filename) filename = getDefaultExportFilename(format);
+            filename = filename.replace(new RegExp(`\\.${format}$`, 'i'), ''); 
+            filename += `.${format}`;
+
+            let blobContent = '';
+            let mimeType = '';
+
+            if (format === 'ics') {
+                blobContent = generateICS(listToExport);
+                mimeType = 'text/calendar;charset=utf-8';
+            } else if (format === 'csv') {
+                blobContent = generateCSV(listToExport);
+                mimeType = 'text/csv;charset=utf-8';
+            } else {
+                blobContent = JSON.stringify(listToExport, null, 2);
+                mimeType = 'application/json;charset=utf-8';
+            }
+
+            const blob = new Blob([blobContent], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(`Export ${format.toUpperCase()} réussi (${listToExport.length} notes) !`);
+        });
+
+        // Raccourci d'export ICS direct depuis la modale calendrier
+        if (btnCalendarExportIcs) {
+            btnCalendarExportIcs.addEventListener('click', () => {
+                if (notes.length === 0) {
+                    showToast('Aucun événement à exporter.', 'error');
+                    return;
+                }
+                const icsData = generateICS(notes);
+                const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `CALENDRIER_COMPLET_${getLocalDateString()}.ics`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("Calendrier iCal (.ics) téléchargé ! Prêt pour Outlook/Google/Apple.");
+            });
+        }
+
+        btnImport.addEventListener('click', () => importFile.click());
+
+        // Parseur iCalendar (ICS / VCS)
+        const parseICS = (content) => {
+            // Déplier les lignes coupées (RFC 5545 fold: \r\n suivi d'un espace ou tabulation)
+            const unfolded = content.replace(/\r?\n[ \t]/g, '');
+            const lines = unfolded.split(/\r?\n/);
+            const imported = [];
+            let inEvent = false;
+            let currentEvent = {};
+
+            const unescapeICS = (str) => {
+                if (!str) return '';
+                return str
+                    .replace(/\\n/gi, '<br>')
+                    .replace(/\\,/g, ',')
+                    .replace(/\\;/g, ';')
+                    .replace(/\\\\/g, '\\');
+            };
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (trimmed === 'BEGIN:VEVENT') {
+                    inEvent = true;
+                    currentEvent = {};
+                    return;
+                }
+                if (trimmed === 'END:VEVENT') {
+                    if (inEvent && currentEvent.date && currentEvent.name) {
+                        imported.push(currentEvent);
+                    }
+                    inEvent = false;
+                    currentEvent = {};
+                    return;
+                }
+                if (!inEvent) return;
+
+                const colonIndex = trimmed.indexOf(':');
+                if (colonIndex === -1) return;
+
+                const propKey = trimmed.substring(0, colonIndex).toUpperCase();
+                const propVal = trimmed.substring(colonIndex + 1);
+
+                if (propKey.startsWith('DTSTART')) {
+                    // Correspondance YYYYMMDD ou YYYY-MM-DD
+                    const match = propVal.match(/(\d{4})[-]?(\d{2})[-]?(\d{2})/);
+                    if (match) {
+                        currentEvent.date = `${match[1]}-${match[2]}-${match[3]}`;
+                        currentEvent.year = calculateSchoolYear(currentEvent.date);
+                    }
+                } else if (propKey.startsWith('SUMMARY')) {
+                    const cleanSummary = unescapeICS(propVal).trim();
+                    let cleanName = cleanSummary;
+                    let detectedRole = 'Autre';
+
+                    // Détection intelligente du préfixe éventuel
+                    if (cleanSummary.startsWith('Entretien:') || cleanSummary.startsWith('RDV:')) {
+                        cleanName = cleanSummary.replace(/^(Entretien:|RDV:)\s*/i, '');
+                    } else if (cleanSummary.includes('RAPPEL:')) {
+                        cleanName = cleanSummary.replace(/^.*RAPPEL:\s*/i, '');
+                        currentEvent.status = 'rappel';
+                    }
+
+                    // Détection de la qualité entre crochets ou parenthèses si présente
+                    const roleMatch = cleanName.match(/\[(.*?)\]|\((Professeur|Élève|Parent|Personnel de direction)\)/i);
+                    if (roleMatch) {
+                        const rawRole = roleMatch[1] || roleMatch[2];
+                        if (/prof/i.test(rawRole)) detectedRole = 'Professeur';
+                        else if (/élève|eleve/i.test(rawRole)) detectedRole = 'Élève';
+                        else if (/parent/i.test(rawRole)) detectedRole = 'Parent';
+                        else if (/direction/i.test(rawRole)) detectedRole = 'Personnel de direction';
+                        cleanName = cleanName.replace(roleMatch[0], '').trim();
+                    }
+
+                    currentEvent.name = cleanName.split(' - ')[0].trim() || 'Événement importé';
+                    currentEvent.role = currentEvent.role || detectedRole;
+                } else if (propKey.startsWith('DESCRIPTION')) {
+                    currentEvent.content = unescapeICS(propVal);
+                } else if (propKey.startsWith('PRIORITY')) {
+                    if (propVal === '1') currentEvent.priority = 'court';
+                    else if (propVal === '5') currentEvent.priority = 'moyen';
+                    else if (propVal === '9') currentEvent.priority = 'long';
+                }
+            });
+
+            return imported.map(item => ({
+                id: generateId(),
+                date: item.date || getLocalDateString(),
+                year: item.year || calculateSchoolYear(item.date),
+                name: item.name || 'Nom importé',
+                role: item.role || 'Autre',
+                teacherSubject: null,
+                studentClass: null,
+                parentStudentName: null,
+                customRole: null,
+                motif: '',
+                customMotif: null,
+                status: item.status || 'en_cours',
+                reminderDate: null,
+                priority: item.priority || 'aucune',
+                url: '',
+                attachmentData: null,
+                attachmentName: null,
+                content: item.content || '<p>Événement importé depuis un calendrier iCalendar.</p>',
+                timestamp: Date.now()
+            }));
+        };
+
+        // Parseur Tableur CSV (supporte séparateurs ';' et ',' et valeurs entre guillemets)
+        const parseCSV = (text) => {
+            // Supprimer l'éventuel BOM UTF-8
+            const cleanText = text.replace(/^\ufeff/, '');
+            
+            // Découpage en lignes respectant les guillemets multilignes
+            const parseCSVLines = (str) => {
+                const rows = [];
+                let currentRow = [];
+                let currentField = '';
+                let insideQuotes = false;
+                
+                // Détecter le délimiteur sur la 1ère ligne
+                const firstLine = str.split(/\r?\n/)[0] || '';
+                const delimiter = (firstLine.match(/;/g) || []).length >= (firstLine.match(/,/g) || []).length ? ';' : ',';
+
+                for (let i = 0; i < str.length; i++) {
+                    const char = str[i];
+                    const nextChar = str[i + 1];
+
+                    if (char === '"') {
+                        if (insideQuotes && nextChar === '"') {
+                            currentField += '"';
+                            i++; // Passer le guillemet échappé
+                        } else {
+                            insideQuotes = !insideQuotes;
+                        }
+                    } else if (char === delimiter && !insideQuotes) {
+                        currentRow.push(currentField.trim());
+                        currentField = '';
+                    } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+                        if (char === '\r' && nextChar === '\n') i++;
+                        currentRow.push(currentField.trim());
+                        if (currentRow.some(cell => cell.length > 0)) rows.push(currentRow);
+                        currentRow = [];
+                        currentField = '';
+                    } else {
+                        currentField += char;
+                    }
+                }
+                if (currentField || currentRow.length > 0) {
+                    currentRow.push(currentField.trim());
+                    if (currentRow.some(cell => cell.length > 0)) rows.push(currentRow);
+                }
+                return rows;
+            };
+
+            const parsedRows = parseCSVLines(cleanText);
+            if (parsedRows.length < 2) return [];
+
+            const headers = parsedRows[0].map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+            const dataRows = parsedRows.slice(1);
+
+            const findIndex = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+
+            const colDate = findIndex(['date']);
+            const colName = findIndex(['nom', 'personne', 'eleve', 'prof']);
+            const colRole = findIndex(['qualite', 'role']);
+            const colMotif = findIndex(['motif']);
+            const colStatus = findIndex(['statut', 'etat']);
+            const colReminder = findIndex(['rappel']);
+            const colPriority = findIndex(['priorite', 'urgent']);
+            const colContent = findIndex(['contenu', 'note', 'compterendu', 'description']);
+            const colUrl = findIndex(['url', 'lien']);
+
+            return dataRows.map(row => {
+                const dateVal = colDate !== -1 && row[colDate] ? row[colDate] : getLocalDateString();
+                const nameVal = colName !== -1 && row[colName] ? row[colName] : 'Personne importée';
+                const contentVal = colContent !== -1 && row[colContent] ? row[colContent] : '';
+
+                return {
+                    id: generateId(),
+                    date: dateVal,
+                    year: calculateSchoolYear(dateVal),
+                    name: nameVal,
+                    role: (colRole !== -1 && row[colRole]) ? row[colRole] : 'Autre',
+                    teacherSubject: null,
+                    studentClass: null,
+                    parentStudentName: null,
+                    customRole: null,
+                    motif: (colMotif !== -1 && row[colMotif]) ? row[colMotif] : '',
+                    customMotif: null,
+                    status: (colStatus !== -1 && row[colStatus]) ? row[colStatus] : 'en_cours',
+                    reminderDate: (colReminder !== -1 && row[colReminder]) ? row[colReminder] : null,
+                    priority: (colPriority !== -1 && row[colPriority]) ? row[colPriority] : 'aucune',
+                    url: (colUrl !== -1 && row[colUrl]) ? row[colUrl] : '',
+                    attachmentData: null,
+                    attachmentName: null,
+                    content: contentVal.startsWith('<') ? contentVal : `<p>${contentVal || 'Note importée depuis un fichier tableur CSV.'}</p>`,
+                    timestamp: Date.now()
+                };
+            });
+        };
+
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const filename = file.name.toLowerCase();
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                try {
+                    const content = event.target.result;
+                    let importedNotes = [];
+
+                    if (filename.endsWith('.ics') || filename.endsWith('.vcs') || content.includes('BEGIN:VCALENDAR')) {
+                        importedNotes = parseICS(content);
+                    } else if (filename.endsWith('.csv')) {
+                        importedNotes = parseCSV(content);
+                    } else {
+                        // Format JSON standard par défaut
+                        importedNotes = JSON.parse(content);
+                    }
+
+                    if (Array.isArray(importedNotes) && importedNotes.length > 0) {
+                        const existingKeys = new Set(notes.map(n => `${n.date}_${(n.name||'').toLowerCase()}`));
+                        let added = 0;
+
+                        importedNotes.forEach(note => {
+                            const key = `${note.date}_${(note.name||'').toLowerCase()}`;
+                            if (note.name && !existingKeys.has(key)) {
+                                notes.push({
+                                    ...note,
+                                    id: note.id || generateId(),
+                                    timestamp: note.timestamp || Date.now()
+                                });
+                                existingKeys.add(key);
+                                added++;
+                            }
+                        });
+
+                        saveNotesToStorage();
+                        updateDashboard();
+
+                        if (added > 0) {
+                            showToast(`${added} événement(s) / note(s) importé(s) avec succès !`);
+                        } else {
+                            showToast('Aucun nouvel événement à importer (doublons ignorés).', 'brand');
+                        }
+                    } else {
+                        showToast('Le fichier ne contient aucun événement valide ou lisible.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur lors du traitement du fichier importé : ' + err.message, 'error');
+                }
+                importFile.value = '';
+            };
+
+            reader.readAsText(file);
+        });
+
+        const exportToWord = (notesToExport, filename = 'LogiNote_Export.doc') => {
+            if (!notesToExport || notesToExport.length === 0) {
+                showToast('Aucune note à exporter.', 'error');
+                return;
+            }
+
+            let htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>Export LogiNote</title>
+                <style>
+                    body { font-family: 'Arial', sans-serif; }
+                    .note-container { margin-bottom: 20px; }
+                    .header { border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 10px; }
+                    .title { font-size: 18pt; font-weight: bold; color: #333; }
+                    .meta { font-size: 11pt; color: #666; margin-top: 5px; }
+                    .content { font-size: 12pt; line-height: 1.5; }
+                    .page-break { mso-special-character: line-break; page-break-before: always; }
+                </style>
+            </head>
+            <body>
+            `;
+
+            notesToExport.forEach((n, index) => {
+                if (index > 0) htmlContent += `<br clear=all class="page-break">`;
+                
+                let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
+                else if (n.role === 'Élève' && n.studentClass) displayRole += ` (${n.studentClass})`;
+                else if (n.role === 'Parent') {
+                    let parentInfo = [];
+                    if (n.parentStudentName) parentInfo.push(n.parentStudentName);
+                if (n.studentClass) parentInfo.push(n.studentClass);
+                if (parentInfo.length > 0) displayRole += ` (Enfant : ${parentInfo.join(' - ')})`;
+            }
+
+            const dateObj = parseLocalDate(n.date);
+            const dateStr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let statusText = "En cours";
+            if (n.status === 'cloture') statusText = "Clôturé";
+            else if (n.status === 'rappel') statusText = `Rappel prévu le ${n.reminderDate ? parseLocalDate(n.reminderDate).toLocaleDateString('fr-FR') : 'À définir'}`;
+
+            let priorityText = "Non définie";
+                if (n.priority === 'court') priorityText = "À court terme";
+                else if (n.priority === 'moyen') priorityText = "À moyen terme";
+                else if (n.priority === 'long') priorityText = "À long terme";
+
+                let extras = '';
+                if (n.motif) {
+                    const displayMotif = n.motif === 'Autre' ? (n.customMotif || 'Non précisé') : n.motif;
+                    extras += `<br><strong>Motif :</strong> ${displayMotif}`;
+                }
+                if (n.url) extras += `<br><strong>Lien :</strong> <a href="${n.url}">${n.url}</a>`;
+                if (n.attachmentName) extras += `<br><strong>Pièce jointe :</strong> ${n.attachmentName}`;
+
+                htmlContent += `
+                <div class="note-container">
+                    <div class="header">
+                        <div class="title">Dossier : ${n.name}</div>
+                        <div class="meta">
+                            <strong>Date de l'entretien :</strong> ${dateStr}<br>
+                            <strong>Qualité :</strong> ${displayRole} | <strong>Année :</strong> ${n.year}<br>
+                            <strong>Statut :</strong> ${statusText} | <strong>Priorité :</strong> ${priorityText}${extras}
+                        </div>
+                    </div>
+                    <div class="content">
+                        ${n.content}
+                    </div>
+                </div>
+                `;
+            });
+
+            htmlContent += `</body></html>`;
+
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showToast('Document Word généré avec succès !');
+        };
+
+        const openCalendar = () => {
+            calendarModal.classList.remove('hidden');
+            calendarModal.classList.add('flex');
+            
+            setTimeout(() => {
+                calendarModal.classList.remove('opacity-0');
+                calendarModalContent.classList.remove('scale-95');
+            }, 10);
+            
+            currentCalendarDate = new Date(); // Reset au mois en cours
+            selectedDateString = null;
+            calendarSidebar.classList.add('hidden');
+            calendarSidebar.classList.remove('flex');
+            renderCalendar();
+        };
+
+        const closeCalendarObj = () => {
+            calendarModal.classList.add('opacity-0');
+            calendarModalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                calendarModal.classList.add('hidden');
+                calendarModal.classList.remove('flex');
+            }, 300);
+        };
+
+        btnCalendar.addEventListener('click', openCalendar);
+        btnCloseCalendar.addEventListener('click', closeCalendarObj);
+        if(btnCloseSidebar) btnCloseSidebar.addEventListener('click', () => {
+            calendarSidebar.classList.add('hidden');
+            calendarSidebar.classList.remove('flex');
+            renderCalendar();
+        });
+
+        const renderCalendar = () => {
+            calendarGrid.innerHTML = '';
+            
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            calendarMonthYear.textContent = currentCalendarDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            let firstDayOfWeek = firstDay.getDay();
+            if (firstDayOfWeek === 0) firstDayOfWeek = 7; // Dimanche devient 7
+            
+            // Cellules vides de début de mois
+            for (let i = 1; i < firstDayOfWeek; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'bg-slate-50/30 rounded-lg border border-transparent opacity-50';
+                calendarGrid.appendChild(emptyCell);
+            }
+            
+            const todayStr = getLocalDateString();
+            
+            // Création des jours
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const currentDate = new Date(year, month, d);
+                const dStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(currentDate.getDate()).padStart(2, '0');
+                
+                const rdvs = notes.filter(n => n.date === dStr);
+                const rappels = notes.filter(n => n.status === 'rappel' && n.reminderDate === dStr);
+                const totalEvents = rdvs.length + rappels.length;
+                
+                const isToday = dStr === todayStr;
+                const isSelected = dStr === selectedDateString;
+                
+                const cell = document.createElement('div');
+                
+                let baseClasses = 'bg-white rounded-lg border p-1 sm:p-1.5 flex flex-col gap-1 transition-all relative group cursor-pointer hover:border-brand-300 hover:shadow-md overflow-hidden';
+                if (isSelected) baseClasses += ' border-brand-500 shadow-md ring-1 ring-brand-500';
+                else if (isToday) baseClasses += ' border-blue-400 bg-blue-50/50';
+                else baseClasses += ' border-slate-200';
+                
+                cell.className = baseClasses;
+                
+                let dayNumberClass = 'text-[11px] sm:text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full mb-0.5';
+                if (isToday) dayNumberClass += ' bg-blue-600 text-white shadow-sm';
+                else dayNumberClass += ' text-slate-700 group-hover:text-brand-600';
+                
+                let cellHtml = `
+                    <div class="flex justify-between items-start">
+                        <span class="${dayNumberClass}">${d}</span>
+                    </div>`;
+                
+                if (totalEvents > 0) {
+                    cellHtml += `<div class="flex flex-col gap-0.5 overflow-hidden flex-1 w-full">`;
+                    rdvs.forEach(n => {
+                        cellHtml += `<div class="text-[9px] leading-[1.1] bg-blue-50 text-blue-700 rounded px-1 py-0.5 truncate border border-blue-200/60" title="RDV: ${n.name}">${n.name}</div>`;
+                    });
+                    rappels.forEach(n => {
+                        cellHtml += `<div class="text-[9px] leading-[1.1] bg-amber-50 text-amber-700 rounded px-1 py-0.5 truncate border border-amber-200/60" title="Rappel: ${n.name}">${n.name}</div>`;
+                    });
+                    cellHtml += `</div>`;
+                }
+
+                cell.innerHTML = cellHtml;
+                
+                cell.addEventListener('click', () => {
+                    selectedDateString = dStr;
+                    showDayDetails(currentDate, rdvs, rappels);
+                    renderCalendar();
+                });
+                
+                calendarGrid.appendChild(cell);
+            }
+        };
+
+        const showDayDetails = (dateObj, rdvs, rappels) => {
+            selectedDayTitle.textContent = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            selectedDayEvents.innerHTML = '';
+            
+            // Nouveau bouton pour créer une note depuis le calendrier
+            const btnNewNote = document.createElement('button');
+            btnNewNote.className = "w-full mb-2 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-100 hover:border-brand-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors shadow-sm shrink-0";
+            btnNewNote.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Créer une note à cette date`;
+            btnNewNote.addEventListener('click', () => {
+                closeCalendarObj();
+                resetEditMode();
+                clearDraft();
+                elDate.value = selectedDateString;
+                elYear.value = calculateSchoolYear(selectedDateString);
+                saveDraft();
+                
+                // Remonter en haut et focaliser sur le nom
+                document.querySelector('section').scrollIntoView({behavior: 'smooth'});
+                setTimeout(() => elName.focus(), 300);
+                showToast("Prêt à rédiger pour le " + dateObj.toLocaleDateString('fr-FR'), "brand");
+            });
+            selectedDayEvents.appendChild(btnNewNote);
+
+            if (rdvs.length === 0 && rappels.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = "text-center text-slate-400 text-xs py-8 flex flex-col items-center gap-2";
+                emptyState.innerHTML = `<span class="text-2xl opacity-50">☕</span> Aucun événement ce jour.`;
+                selectedDayEvents.appendChild(emptyState);
+            } else {
+                const createEventCard = (note, type) => {
+                    const isRdv = type === 'rdv';
+                    const bgClass = isRdv ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100';
+                    const iconClass = isRdv ? 'text-blue-600' : 'text-amber-600';
+                    const typeText = isRdv ? 'Entretien' : 'Rappel';
+                    
+                    let roleDisplay = note.role === 'Autre' ? (note.customRole || 'Autre') : note.role;
+                    if(note.role === 'Professeur' && note.teacherSubject) roleDisplay += ` (${note.teacherSubject})`;
+                    else if(note.role === 'Parent' && note.parentStudentName) roleDisplay += ` (Enfant: ${note.parentStudentName})`;
+                    
+                    let priorityBadge = '';
+                    if (note.priority === 'court') priorityBadge = '🔴';
+                    if (note.priority === 'moyen') priorityBadge = '🟠';
+                    if (note.priority === 'long') priorityBadge = '🟢';
+                    
+                    const card = document.createElement('div');
+                    card.className = `p-2.5 rounded-lg border ${bgClass} shadow-sm`;
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[9px] font-bold uppercase tracking-wider ${iconClass}">
+                                ${typeText}
+                            </span>
+                            ${priorityBadge ? `<span class="text-[10px] bg-white rounded-full px-1 shadow-sm border border-slate-100">${priorityBadge}</span>` : ''}
+                        </div>
+                        <h5 class="font-bold text-slate-800 text-xs leading-tight mb-0.5">${note.name}</h5>
+                        <div class="text-[10px] text-slate-600 mb-2 truncate">${roleDisplay}</div>
+                        <button class="w-full py-1 bg-white text-[11px] font-semibold text-slate-700 border border-slate-200 rounded hover:bg-slate-50 hover:border-brand-300 hover:text-brand-700 transition-colors shadow-sm open-from-calendar" data-name="${note.name}">
+                            Filtrer ce dossier
+                        </button>
+                    `;
+                    
+                    card.querySelector('.open-from-calendar').addEventListener('click', (e) => {
+                        elSearchPerson.value = e.target.getAttribute('data-name');
+                        updateDashboard();
+                        closeCalendarObj();
+                        // Scroll fluide vers la zone de recherche (si sur mobile)
+                        document.querySelector('section:nth-of-type(2)').scrollIntoView({behavior: 'smooth'});
+                    });
+                    
+                    return card;
+                };
+
+                rdvs.forEach(n => selectedDayEvents.appendChild(createEventCard(n, 'rdv')));
+                rappels.forEach(n => selectedDayEvents.appendChild(createEventCard(n, 'rappel')));
+            }
+            
+            calendarSidebar.classList.remove('hidden');
+            calendarSidebar.classList.add('flex');
+        };
+
+        btnPrevMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+        
+        btnNextMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        document.getElementById('btnExportWordList').addEventListener('click', () => {
+            const searchVal = elSearchPerson.value.trim();
+            const prefix = searchVal ? searchVal.replace(/\s+/g, '_') : 'Archives_Globales';
+            const filename = `LogiNote_${prefix}_${getLocalDateString()}.doc`;
+            exportToWord(currentFilteredNotes, filename);
+        });
+
+        elNotesList.addEventListener('click', (e) => {
+            // Action : Export Word Single Note
+            const btnWord = e.target.closest('.export-single-word');
+            if (btnWord) {
+                const noteId = btnWord.getAttribute('data-id');
+                const note = notes.find(n => n.id === noteId);
+                if (note) {
+                    const filename = `Note_${note.name.replace(/\s+/g, '_')}_${note.date}.doc`;
+                    exportToWord([note], filename);
+                }
+                return;
+            }
+
+            // Action : Édition Single Note
+            const btnEdit = e.target.closest('.edit-single-note');
+            if (btnEdit) {
+                const noteId = btnEdit.getAttribute('data-id');
+                const note = notes.find(n => n.id === noteId);
+                
+                if (note) {
+                    editingNoteId = note.id;
+                    
+                    elDate.value = note.date || '';
+                    elYear.value = note.year || '';
+                    elName.value = note.name || '';
+                    elRole.value = note.role || 'Professeur';
+                    toggleRoleSpecificFields(); 
+                    
+                    if (note.role === 'Professeur') elTeacherSubject.value = note.teacherSubject || '';
+                    if (note.role === 'Élève' || note.role === 'Parent') elStudentClass.value = note.studentClass || '';
+                    if (note.role === 'Parent') elParentStudentName.value = note.parentStudentName || '';
+                    if (note.role === 'Autre') elOtherRole.value = note.customRole || '';
+                    
+                    elMotif.value = note.motif || '';
+                    toggleOtherMotif();
+                    if (note.motif === 'Autre') elOtherMotif.value = note.customMotif || '';
+
+                    elStatus.value = note.status || 'en_cours';
+                    toggleReminder(); 
+                    elReminderDate.value = note.reminderDate || '';
+                    elPriority.value = note.priority || 'aucune';
+                    elUrl.value = note.url || '';
+                    currentAttachmentData = note.attachmentData || null;
+                    currentAttachmentName = note.attachmentName || null;
+                    updateAttachmentUI();
+                    
+                    elEditor.innerHTML = note.content || '';
+                    
+                    formTitle.innerHTML = `<span class="text-xl">✍️</span> Modifier la note`;
+                    saveBtnText.textContent = "Mettre à jour la note ✨";
+                    saveBtnIcon.innerHTML = `<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>`;
+                    
+                    btnSaveNote.classList.remove('from-brand-600', 'to-brand-500', 'hover:from-brand-700', 'hover:to-brand-600', 'focus:ring-brand-500', 'bg-brand-600', 'hover:bg-brand-700');
+                    btnSaveNote.classList.add('bg-gradient-to-r', 'from-amber-500', 'to-amber-400', 'hover:from-amber-600', 'hover:to-amber-500', 'focus:ring-amber-500');
+                    btnCancelEdit.classList.remove('hidden');
+                    
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    document.querySelector('section').scrollIntoView({behavior: 'smooth'});
+                    showToast("Mode édition activé", "brand");
+                }
+            }
+        });
+
+        window.onload = () => {
+            loadNotes();
+            loadDraft();
+        };
+    </script>
+</body>
+</html>
