@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PERDIRFORMANCE LOGI-NOTE V1</title>
+    <title>PERDIRFORMANCE LOGI-NOTE V1.1</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -122,7 +122,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-brand-700 leading-tight">PERDIRFORMANCE LOGI-NOTE V1</h1>
+                    <h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-brand-700 leading-tight">PERDIRFORMANCE LOGI-NOTE V1.1</h1>
                     <p class="text-xs text-slate-500 font-medium">Prise de notes et suivi de RDV en EPLE 🏫</p>
                 </div>
             </div>
@@ -244,6 +244,7 @@
                                 <option value="Valorisation et excellence">Valorisation et excellence</option>
                                 <option value="Construction de l'orientation">Construction de l'orientation</option>
                                 <option value="Aménagements spécifiques">Aménagements spécifiques (PAP, PPS, PPRE, PAI)</option>
+                                <option value="MDPH">MDPH</option>
                             </optgroup>
                             <optgroup label="Respect du Cadre et Vie Scolaire">
                                 <option value="Défaut d'assiduité ou de ponctualité">Défaut d'assiduité ou de ponctualité</option>
@@ -270,6 +271,7 @@
                                 <option value="Exercice d'un mandat">Exercice d'un mandat</option>
                                 <option value="Portage d'initiatives">Portage d'initiatives</option>
                             </optgroup>
+                            <option value="EDT">EDT</option>
                             <option value="Autre">Autre (préciser)...</option>
                         </select>
                     </div>
@@ -1530,7 +1532,7 @@
             let ics = [
                 'BEGIN:VCALENDAR',
                 'VERSION:2.0',
-                'PRODID:-//PERDIRFORMANCE LOGI-NOTE V1//FR',
+                'PRODID:-//PERDIRFORMANCE LOGI-NOTE V1.1//FR',
                 'CALSCALE:GREGORIAN',
                 'METHOD:PUBLISH',
                 'X-WR-CALNAME:LogiNote - Suivi EPLE'
@@ -2028,6 +2030,15 @@
                 return;
             }
 
+            // Tri par Nom (alphabétique) puis par Date (du plus récent au plus ancien)
+            const sortedNotes = [...notesToExport].sort((a, b) => {
+                const nameA = (a.name || '').toLowerCase();
+                const nameB = (b.name || '').toLowerCase();
+                if (nameA < nameB) return -1;
+                if (nameA > nameB) return 1;
+                return parseLocalDate(b.date) - parseLocalDate(a.date);
+            });
+
             let htmlContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head>
@@ -2035,38 +2046,39 @@
                 <title>Export LogiNote</title>
                 <style>
                     body { font-family: 'Arial', sans-serif; }
-                    .note-container { margin-bottom: 20px; }
-                    .header { border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 10px; }
-                    .title { font-size: 18pt; font-weight: bold; color: #333; }
-                    .meta { font-size: 11pt; color: #666; margin-top: 5px; }
-                    .content { font-size: 12pt; line-height: 1.5; }
-                    .page-break { mso-special-character: line-break; page-break-before: always; }
+                    .person-header { font-size: 16pt; font-weight: bold; color: #0c4a6e; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #0ea5e9; padding-bottom: 5px; }
+                    .note-container { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px dashed #cbd5e1; }
+                    .note-container:last-child { border-bottom: none; }
+                    .header { margin-bottom: 15px; }
+                    .title { font-size: 13pt; font-weight: bold; color: #333; margin-bottom: 8px; }
+                    .meta { font-size: 11pt; color: #475569; background: #f8fafc; padding: 10px; border-radius: 4px; border-left: 4px solid #cbd5e1; }
+                    .content { font-size: 12pt; line-height: 1.5; margin-top: 15px; }
                 </style>
             </head>
             <body>
             `;
 
-            notesToExport.forEach((n, index) => {
-                if (index > 0) htmlContent += `<br clear=all class="page-break">`;
-                
+            let currentPerson = null;
+
+            sortedNotes.forEach((n) => {
                 let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
                 if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
                 else if (n.role === 'Élève' && n.studentClass) displayRole += ` (${n.studentClass})`;
                 else if (n.role === 'Parent') {
                     let parentInfo = [];
                     if (n.parentStudentName) parentInfo.push(n.parentStudentName);
-                if (n.studentClass) parentInfo.push(n.studentClass);
-                if (parentInfo.length > 0) displayRole += ` (Enfant : ${parentInfo.join(' - ')})`;
-            }
+                    if (n.studentClass) parentInfo.push(n.studentClass);
+                    if (parentInfo.length > 0) displayRole += ` (Enfant : ${parentInfo.join(' - ')})`;
+                }
 
-            const dateObj = parseLocalDate(n.date);
-            const dateStr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const dateObj = parseLocalDate(n.date);
+                const dateStr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            let statusText = "En cours";
-            if (n.status === 'cloture') statusText = "Clôturé";
-            else if (n.status === 'rappel') statusText = `Rappel prévu le ${n.reminderDate ? parseLocalDate(n.reminderDate).toLocaleDateString('fr-FR') : 'À définir'}`;
+                let statusText = "En cours";
+                if (n.status === 'cloture') statusText = "Clôturé";
+                else if (n.status === 'rappel') statusText = `Rappel prévu le ${n.reminderDate ? parseLocalDate(n.reminderDate).toLocaleDateString('fr-FR') : 'À définir'}`;
 
-            let priorityText = "Non définie";
+                let priorityText = "Non définie";
                 if (n.priority === 'court') priorityText = "À court terme";
                 else if (n.priority === 'moyen') priorityText = "À moyen terme";
                 else if (n.priority === 'long') priorityText = "À long terme";
@@ -2079,12 +2091,18 @@
                 if (n.url) extras += `<br><strong>Lien :</strong> <a href="${n.url}">${n.url}</a>`;
                 if (n.attachmentName) extras += `<br><strong>Pièce jointe :</strong> ${n.attachmentName}`;
 
+                // Affichage conditionnel de l'en-tête de la personne
+                const personNameLower = (n.name || '').toLowerCase();
+                if (currentPerson !== personNameLower) {
+                    currentPerson = personNameLower;
+                    htmlContent += `<div class="person-header">Dossier : ${n.name}</div>`;
+                }
+
                 htmlContent += `
                 <div class="note-container">
                     <div class="header">
-                        <div class="title">Dossier : ${n.name}</div>
+                        <div class="title">Entretien du ${dateStr}</div>
                         <div class="meta">
-                            <strong>Date de l'entretien :</strong> ${dateStr}<br>
                             <strong>Qualité :</strong> ${displayRole} | <strong>Année :</strong> ${n.year}<br>
                             <strong>Statut :</strong> ${statusText} | <strong>Priorité :</strong> ${priorityText}${extras}
                         </div>
