@@ -1264,13 +1264,15 @@
 
             currentFilteredNotes.sort((a, b) => {
                 if(a.date !== b.date) return parseLocalDate(b.date) - parseLocalDate(a.date);
-                // Si même date, tri par heure si existante
-                if(a.time !== b.time) {
-                    if(!a.time) return 1;
-                    if(!b.time) return -1;
-                    return b.time.localeCompare(a.time);
+                // Si même date, tri par heure chronologique (ascendant)
+                const timeA = a.time || '';
+                const timeB = b.time || '';
+                if(timeA !== timeB) {
+                    if(!timeA) return -1; // Les événements sans heure (Journée entière) s'affichent en premier
+                    if(!timeB) return 1;
+                    return timeA.localeCompare(timeB); // Tri chronologique : 09:30 avant 14:00
                 }
-                return b.timestamp - a.timestamp;
+                return a.timestamp - b.timestamp;
             });
 
             renderNotes(currentFilteredNotes, fPerson, fContent);
@@ -1355,9 +1357,9 @@
                 card.className = "bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-slate-200 mb-4 hover:shadow-md transition-shadow group";
                 
                 card.innerHTML = `
-                    <div class="flex flex-wrap justify-between items-start gap-3 mb-3 pb-3 border-b border-slate-100">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-lg leading-tight">${highlightText(n.name, highlightPerson)}</h3>
+                    <div class="flex flex-wrap items-start gap-3 mb-3 pb-3 border-b border-slate-100">
+                        <div class="flex-1 min-w-[250px]">
+                            <h3 class="font-bold text-slate-800 text-lg leading-tight break-words">${highlightText(n.name, highlightPerson)}</h3>
                             <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                                 ${statusBadge}
                                 ${priorityBadge}
@@ -1366,7 +1368,7 @@
                                 <span class="px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">${n.year}</span>
                             </div>
                         </div>
-                        <div class="text-right">
+                        <div class="ml-auto text-right shrink-0">
                             <div class="text-sm font-semibold text-slate-700 capitalize flex items-center justify-end gap-1.5">
                                 <button class="edit-single-note text-amber-500 hover:text-amber-700 hover:bg-amber-50 p-1.5 rounded-md transition-colors border border-transparent hover:border-amber-200" data-id="${n.id}" title="Modifier cette note">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
@@ -2100,7 +2102,17 @@
                 const nameB = (b.name || '').toLowerCase();
                 if (nameA < nameB) return -1;
                 if (nameA > nameB) return 1;
-                return parseLocalDate(b.date) - parseLocalDate(a.date);
+                
+                if (a.date !== b.date) return parseLocalDate(b.date) - parseLocalDate(a.date);
+                
+                const timeA = a.time || '';
+                const timeB = b.time || '';
+                if(timeA !== timeB) {
+                    if(!timeA) return -1;
+                    if(!timeB) return 1;
+                    return timeA.localeCompare(timeB);
+                }
+                return a.timestamp - b.timestamp;
             });
 
             let htmlContent = `
@@ -2283,13 +2295,34 @@
                 
                 if (totalEvents > 0) {
                     cellHtml += `<div class="flex flex-col gap-0.5 overflow-hidden flex-1 w-full">`;
-                    rdvs.forEach(n => {
+                    
+                    // Fusion et tri chronologique pour la grille du calendrier
+                    const dayItems = [
+                        ...rdvs.map(n => ({ item: n, type: 'rdv' })),
+                        ...rappels.map(n => ({ item: n, type: 'rappel' }))
+                    ];
+                    
+                    dayItems.sort((a, b) => {
+                        const timeA = a.item.time || '';
+                        const timeB = b.item.time || '';
+                        if (timeA !== timeB) {
+                            if (!timeA) return -1;
+                            if (!timeB) return 1;
+                            return timeA.localeCompare(timeB);
+                        }
+                        return a.item.timestamp - b.item.timestamp;
+                    });
+
+                    dayItems.forEach(obj => {
+                        const n = obj.item;
                         const timePrefix = n.time ? `${n.time} ` : '';
-                        cellHtml += `<div class="text-[9px] leading-[1.1] bg-blue-50 text-blue-700 rounded px-1 py-0.5 truncate border border-blue-200/60" title="RDV: ${n.name}">${timePrefix}${n.name}</div>`;
+                        if (obj.type === 'rdv') {
+                            cellHtml += `<div class="text-[9px] leading-[1.1] bg-blue-50 text-blue-700 rounded px-1 py-0.5 truncate border border-blue-200/60" title="RDV: ${n.name}">${timePrefix}${n.name}</div>`;
+                        } else {
+                            cellHtml += `<div class="text-[9px] leading-[1.1] bg-amber-50 text-amber-700 rounded px-1 py-0.5 truncate border border-amber-200/60" title="Rappel: ${n.name}">${timePrefix}${n.name}</div>`;
+                        }
                     });
-                    rappels.forEach(n => {
-                        cellHtml += `<div class="text-[9px] leading-[1.1] bg-amber-50 text-amber-700 rounded px-1 py-0.5 truncate border border-amber-200/60" title="Rappel: ${n.name}">${n.name}</div>`;
-                    });
+                    
                     cellHtml += `</div>`;
                 }
 
@@ -2334,6 +2367,23 @@
                 emptyState.innerHTML = `<span class="text-2xl opacity-50">☕</span> Aucun événement ce jour.`;
                 selectedDayEvents.appendChild(emptyState);
             } else {
+                // Fusion et tri chronologique pour le panneau latéral
+                const dayItems = [
+                    ...rdvs.map(n => ({ item: n, type: 'rdv' })),
+                    ...rappels.map(n => ({ item: n, type: 'rappel' }))
+                ];
+                
+                dayItems.sort((a, b) => {
+                    const timeA = a.item.time || '';
+                    const timeB = b.item.time || '';
+                    if (timeA !== timeB) {
+                        if (!timeA) return -1;
+                        if (!timeB) return 1;
+                        return timeA.localeCompare(timeB);
+                    }
+                    return a.item.timestamp - b.item.timestamp;
+                });
+
                 const createEventCard = (note, type) => {
                     const isRdv = type === 'rdv';
                     const bgClass = isRdv ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100';
@@ -2378,8 +2428,7 @@
                     return card;
                 };
 
-                rdvs.forEach(n => selectedDayEvents.appendChild(createEventCard(n, 'rdv')));
-                rappels.forEach(n => selectedDayEvents.appendChild(createEventCard(n, 'rappel')));
+                dayItems.forEach(obj => selectedDayEvents.appendChild(createEventCard(obj.item, obj.type)));
             }
             
             calendarSidebar.classList.remove('hidden');
