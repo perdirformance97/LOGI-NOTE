@@ -172,6 +172,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
                     <span class="hidden sm:inline">Exporter</span>
                 </button>
+                <button id="btnDeleteAll" class="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center gap-2 shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-red-500" title="Tout supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <span class="hidden sm:inline">Tout supprimer</span>
+                </button>
             </div>
         </div>
     </header>
@@ -557,6 +561,21 @@
             <div class="flex justify-center gap-3">
                 <button id="btnCancelDelete" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors focus:ring-2 focus:ring-slate-400">Annuler</button>
                 <button id="btnConfirmDelete" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors focus:ring-2 focus:ring-red-500 shadow-sm">Oui, supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression globale -->
+    <div id="deleteAllModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 transform transition-all border border-slate-200 text-center">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Tout supprimer ?</h3>
+            <p class="text-sm text-slate-500 mb-5">Cette action est irréversible. TOUTES vos notes et rappels seront définitivement effacés de ce navigateur.</p>
+            <div class="flex justify-center gap-3">
+                <button id="btnCancelDeleteAll" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors focus:ring-2 focus:ring-slate-400">Annuler</button>
+                <button id="btnConfirmDeleteAll" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors focus:ring-2 focus:ring-red-500 shadow-sm">Oui, tout effacer</button>
             </div>
         </div>
     </div>
@@ -2540,6 +2559,32 @@
             }
             document.getElementById('deleteModal').classList.add('hidden');
             noteToDeleteId = null;
+        });
+
+        // Logique de suppression totale
+        const btnDeleteAll = document.getElementById('btnDeleteAll');
+        const deleteAllModal = document.getElementById('deleteAllModal');
+        const btnCancelDeleteAll = document.getElementById('btnCancelDeleteAll');
+        const btnConfirmDeleteAll = document.getElementById('btnConfirmDeleteAll');
+
+        btnDeleteAll.addEventListener('click', () => {
+            if (notes.length === 0) {
+                showToast('Aucune donnée à supprimer.', 'error');
+                return;
+            }
+            deleteAllModal.classList.remove('hidden');
+        });
+
+        btnCancelDeleteAll.addEventListener('click', () => {
+            deleteAllModal.classList.add('hidden');
+        });
+
+        btnConfirmDeleteAll.addEventListener('click', () => {
+            notes = [];
+            saveNotesToStorage();
+            updateDashboard();
+            deleteAllModal.classList.add('hidden');
+            showToast('Toutes les notes ont été supprimées.', 'success');
         });
 
         window.onload = () => {
