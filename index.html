@@ -3,1197 +3,1758 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PERDIRFORMANCE LOGI-EVAL V1</title>
+    <title>PERDIRFORMANCE LOGI-NOTE V2</title>
     
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS (Excel) -->
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- PapaParse (CSV) -->
-    <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-
-    <style>
-        body { font-family: 'Marianne', 'Inter', system-ui, sans-serif; background-color: #f1f5f9; }
-        
-        .marianne-bg { background: linear-gradient(135deg, #000091 0%, #3b82f6 100%); }
-        .marianne-text { color: #000091; }
-        
-        /* Animations fluides */
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Style spécifique impression A4 Paysage */
-        @media print {
-            @page { size: A4 landscape; margin: 10mm; }
-            body { background-color: white; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            
-            .print-grid {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                column-gap: 10mm !important;
-                row-gap: 8mm !important;
-                width: 100% !important;
-            }
-            .print-chart-container { 
-                page-break-inside: avoid;
-                height: auto !important; 
-                min-height: 8.5cm;
-                display: flex !important;
-                flex-direction: column;
-                justify-content: flex-start;
-                align-items: center;
-                border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important;
-            }
-            .print-chart-container canvas {
-                max-height: 7cm !important;
-                max-width: 100% !important;
-            }
-            .print-header { display: block !important; text-align: center; margin-bottom: 10px; color: black !important; }
-        }
-        .print-header { display: none; }
-    </style>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Exposition globale pour React
-        window.FB = { doc, getDoc, setDoc };
-        
-        try {
-            const configStr = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-            if (configStr) {
-                const app = initializeApp(JSON.parse(configStr));
-                window.FB.db = getFirestore(app);
-                window.FB.auth = getAuth(app);
-                
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(window.FB.auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(window.FB.auth);
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
                     }
-                    window.dispatchEvent(new Event('firebase-ready'));
-                };
-                initAuth();
+                }
             }
-        } catch (e) {
-            console.error("Erreur Firebase:", e);
         }
     </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-left: 1px solid #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border: 3px solid #f1f5f9;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b;
+        }
+
+        .editor-content:empty:before {
+            content: attr(placeholder);
+            color: #94a3b8;
+            pointer-events: none;
+            display: block;
+        }
+        .editor-content:focus {
+            outline: none;
+        }
+        
+        *:focus-visible {
+            outline: 3px solid #0ea5e9;
+            outline-offset: 2px;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .mic-active {
+            animation: pulse-red 1.5s infinite;
+            background-color: #fee2e2 !important;
+            color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+        
+        .editor-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .editor-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .editor-content h3 { font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .editor-content h4 { font-size: 1.1rem; font-weight: 600; color: #334155; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+        .editor-content p { margin-bottom: 0.5rem; }
+        
+        mark.search-highlight {
+            background-color: #fef08a;
+            color: #0f172a;
+            padding: 0.1em 0.2em;
+            border-radius: 0.2em;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes scintille-doux {
+            0% { color: #0284c7; text-shadow: 0 0 2px rgba(2,132,199,0.1); }
+            50% { color: #0ea5e9; text-shadow: 0 0 8px rgba(14,165,233,0.5); }
+            100% { color: #0284c7; text-shadow: 0 0 2px rgba(2,132,199,0.1); }
+        }
+        .scintille-doux {
+            animation: scintille-doux 3s infinite ease-in-out;
+            font-weight: 700;
+        }
+    </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-brand-50/50">
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        const normalizeString = (str) => {
-            if (!str) return '';
-            return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-        };
-
-        const ChartComponent = ({ title, data, axisLabels, colors, subtitle, drawSeparator, showLabels, isStacked, comment, onCommentChange }) => {
-            const chartRef = useRef(null);
-            const chartInstance = useRef(null);
-
-            // NOUVEAU : Générateur d'analyse factuelle automatique pour Word
-            const autoSummary = useMemo(() => {
-                const datasets = data.datasets;
-                if (!axisLabels || !datasets || datasets.length < 3) return "";
-                
-                if (axisLabels.length === 1) {
-                    const sat = datasets[0].data[0] || 0;
-                    const bes = datasets[2].data[0] || 0;
-                    return `${sat.toFixed(1)}% des élèves ont un niveau satisfaisant, contre ${bes.toFixed(1)}% d'élèves à besoins.`;
-                } else {
-                    let maxSat = -1, maxSatLab = "";
-                    let maxBes = -1, maxBesLab = "";
-                    axisLabels.forEach((label, idx) => {
-                        const sat = datasets[0].data[idx] || 0;
-                        const bes = datasets[2].data[idx] || 0;
-                        if (sat > maxSat) { maxSat = sat; maxSatLab = label; }
-                        if (bes > maxBes) { maxBes = bes; maxBesLab = label; }
-                    });
-                    if (maxSatLab === maxBesLab) {
-                        return `Le groupe "${maxSatLab}" se démarque avec ${maxSat.toFixed(1)}% de réussite, mais concentre aussi le plus fort taux de besoins (${maxBes.toFixed(1)}%).`;
-                    } else {
-                        return `Le plus fort taux de réussite est de ${maxSat.toFixed(1)}% ("${maxSatLab}"). À l'inverse, on observe jusqu'à ${maxBes.toFixed(1)}% de besoins ("${maxBesLab}").`;
-                    }
-                }
-            }, [data, axisLabels]);
-
-            useEffect(() => {
-                if (chartInstance.current) chartInstance.current.destroy();
-                const ctx = chartRef.current.getContext('2d');
-
-                const filteredDatasets = data.datasets.filter(ds => {
-                    if (ds.label === 'Pas de restitution' && ds.counts.every(c => c === 0)) return false;
-                    return true;
-                });
-
-                // Plugin sur-mesure pour tracer la ligne rouge de séparation Filles/Garçons
-                const customPlugins = [];
-                if (drawSeparator) {
-                    customPlugins.push({
-                        id: 'redLineSeparator',
-                        afterDraw: (chart) => {
-                            if (chart.scales.x.ticks.length > 1) {
-                                const chartCtx = chart.ctx;
-                                const xAxis = chart.scales.x;
-                                const yAxis = chart.scales.y;
-                                
-                                chartCtx.save();
-                                chartCtx.beginPath();
-                                for (let i = 0; i < xAxis.ticks.length - 1; i++) {
-                                    const x = (xAxis.getPixelForTick(i) + xAxis.getPixelForTick(i+1)) / 2;
-                                    chartCtx.moveTo(x, yAxis.top);
-                                    chartCtx.lineTo(x, yAxis.bottom);
-                                }
-                                chartCtx.lineWidth = 1.5;
-                                chartCtx.strokeStyle = '#dc2626'; // Rouge vif
-                                chartCtx.stroke();
-                                chartCtx.restore();
-                            }
-                        }
-                    });
-                }
-
-                // NOUVEAU PLUGIN : Affichage des étiquettes (Datalabels) au-dessus des barres
-                if (showLabels) {
-                    customPlugins.push({
-                        id: 'customDatalabels',
-                        afterDatasetsDraw: (chart) => {
-                            const ctx = chart.ctx;
-                            chart.data.datasets.forEach((dataset, i) => {
-                                const meta = chart.getDatasetMeta(i);
-                                if (!meta.hidden) {
-                                    meta.data.forEach((element, index) => {
-                                        const val = dataset.data[index];
-                                        const count = dataset.counts[index];
-                                        
-                                        // On masque les étiquettes des très petites sections en mode empilé pour éviter la superposition
-                                        if (count > 0 && (!isStacked || val > 4)) {
-                                            const position = element.tooltipPosition();
-                                            ctx.fillStyle = '#000000';
-                                            ctx.textAlign = 'center';
-                                            
-                                            if (isStacked) {
-                                                // Mode ADN : Texte centré dans la couleur avec halo blanc pour la lisibilité
-                                                ctx.textBaseline = 'middle';
-                                                ctx.shadowColor = 'white';
-                                                ctx.shadowBlur = 4;
-                                                ctx.font = '900 11px "Inter", sans-serif';
-                                                ctx.fillText(val.toFixed(1) + '%', position.x, position.y - 6);
-                                                ctx.font = 'bold 10px "Inter", sans-serif';
-                                                ctx.fillText(`(${count})`, position.x, position.y + 6);
-                                                ctx.shadowBlur = 0; // Reset
-                                            } else {
-                                                // Mode Bâtons : Texte au-dessus de la barre
-                                                ctx.textBaseline = 'bottom';
-                                                ctx.font = '900 11px "Inter", sans-serif';
-                                                ctx.fillText(val.toFixed(1) + '%', position.x, position.y - 12);
-                                                ctx.font = 'bold 10px "Inter", sans-serif';
-                                                ctx.fillText(`(${count})`, position.x, position.y - 1);
-                                            }
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-
-                chartInstance.current = new Chart(ctx, {
-                    type: 'bar',
-                    plugins: customPlugins,
-                    data: {
-                        labels: axisLabels,
-                        datasets: filteredDatasets.map(ds => ({
-                            label: ds.label,
-                            data: ds.data,
-                            backgroundColor: ds.backgroundColor,
-                            borderWidth: 1,
-                            counts: ds.counts,
-                            maxBarThickness: 60,
-                            borderRadius: 4
-                        }))
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { 
-                                position: 'bottom',
-                                labels: { font: { size: 14, weight: 'bold' }, color: '#000000', padding: 20 }
-                            },
-                            title: { 
-                                display: true, 
-                                text: title, 
-                                font: { size: 17, weight: '900' },
-                                color: '#000000',
-                                padding: { top: 10, bottom: 25 }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(0,0,0,0.8)',
-                                titleFont: { size: 14 },
-                                bodyFont: { size: 14 },
-                                padding: 12,
-                                callbacks: {
-                                    label: function(context) {
-                                        const count = context.dataset.counts[context.dataIndex];
-                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}% (${count} élève${count > 1 ? 's' : ''})`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                stacked: isStacked,
-                                beginAtZero: true,
-                                max: 110,
-                                ticks: { 
-                                    color: '#000000', 
-                                    font: { weight: 'bold' },
-                                    stepSize: 20,
-                                    callback: function(value) {
-                                        if (value > 100) return ""; // Masque le nombre "110" pour que l'axe s'arrête visuellement à 100
-                                        return value;
-                                    }
-                                },
-                                title: { display: true, text: 'Pourcentage (%)', font: { weight: 'bold' }, color: '#000000' },
-                                grid: { color: '#e2e8f0' }
-                            },
-                            x: {
-                                stacked: isStacked,
-                                ticks: { color: '#000000', font: { weight: 'bold' } },
-                                title: { display: true, text: subtitle, font: { weight: 'bold' }, color: '#000000' },
-                                grid: { display: false }
-                            }
-                        }
-                    }
-                });
-
-                return () => { if (chartInstance.current) chartInstance.current.destroy(); }
-            }, [title, data, axisLabels, colors, subtitle, drawSeparator, showLabels]);
-
-            return (
-                <div className="w-full bg-white p-4 rounded-xl shadow-sm border border-slate-200 print-chart-container hover:shadow-md transition-shadow flex flex-col" data-summary={autoSummary}>
-                    {/* Correction stricte de la hauteur pour interdire l'écrasement des graphiques */}
-                    <div className="w-full relative flex-none h-[400px] min-h-[400px] print:h-[7.5cm] print:min-h-[7.5cm]">
-                        <canvas ref={chartRef}></canvas>
-                    </div>
-                    
-                    {/* Zone de commentaire */}
-                    <div className="w-full mt-3 pt-3 border-t border-slate-100 no-print">
-                        <textarea 
-                            className="w-full text-sm p-2.5 border border-slate-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-slate-700 resize-none h-16 bg-slate-50 transition-colors hover:bg-white"
-                            placeholder="📝 Rédigez une analyse ou un commentaire pédagogique pour cette compétence..."
-                            value={comment || ''}
-                            onChange={(e) => onCommentChange(e.target.value)}
-                        ></textarea>
-                    </div>
-                    
-                    {/* Version imprimable du commentaire */}
-                    {comment && (
-                        <div className="hidden print:block mt-2 w-full text-sm text-black text-left" style={{fontFamily: 'sans-serif'}}>
-                            <span className="font-bold border-b-2 border-blue-900 pb-0.5">Analyse de l'équipe :</span> <i className="ml-1">{comment}</i>
-                        </div>
-                    )}
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm z-10 shrink-0">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="mainLogoContainer" class="bg-gradient-to-tr from-brand-600 to-brand-500 text-white p-2 rounded-lg shadow-md transform transition-transform hover:scale-105 flex items-center justify-center overflow-hidden h-10 w-10">
+                    <svg id="defaultLogoSvg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+                    <img id="customEpleLogo" class="hidden max-h-full max-w-full object-contain" alt="Logo de l'établissement" />
                 </div>
-            );
-        };
+                <div>
+                    <h1 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-brand-700 leading-tight">PERDIRFORMANCE LOGI-NOTE V2</h1>
+                    <p class="text-xs text-slate-500 font-medium">Prise de notes et suivi de RDV en EPLE 🏫</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3">
+                
+                <button id="btnSettings" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Paramètres" title="Paramètres et Personnalisation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
 
-        const App = () => {
-            // État des données
-            const [evalFiles, setEvalFiles] = useState([]); 
-            const [studentData, setStudentData] = useState({});
-            const [mergedData, setMergedData] = useState([]);
+                <div class="relative" id="reminderDropdownContainer">
+                    <button id="btnReminders" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Rappels">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                        <span id="reminderBadge" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full items-center justify-center border-2 border-white shadow-sm flex">0</span>
+                    </button>
+                    <div id="reminderDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 flex flex-col overflow-hidden origin-top-right transition-all">
+                        <div class="p-3 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                Rappels programmés
+                            </h3>
+                            <span id="reminderCountText" class="text-xs font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200 shadow-sm">0</span>
+                        </div>
+                        <div id="reminderList" class="max-h-[60vh] overflow-y-auto p-2 flex flex-col gap-1.5"></div>
+                    </div>
+                </div>
+                
+                <button id="btnCalendar" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" aria-label="Calendrier global" title="Ouvrir le calendrier annuel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+                </button>
+
+                <input type="file" id="importFile" accept=".json,.ics,.vcs,.csv" class="hidden" aria-label="Fichier à importer">
+                <button id="btnImport" class="px-3 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors flex items-center gap-2 focus:ring-2 focus:ring-brand-500" title="Importer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+                    <span class="hidden sm:inline">Importer</span>
+                </button>
+                <button id="btnExport" class="px-3 py-2 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition-colors flex items-center gap-2 shadow-sm focus:ring-2 focus:ring-brand-500" title="Exporter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                    <span class="hidden sm:inline">Exporter</span>
+                </button>
+                <button id="btnDeleteAll" class="px-2 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors flex items-center gap-2 shadow-sm focus:ring-2 focus:ring-red-500" title="Tout supprimer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <span class="hidden xl:inline">Tout supprimer</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-screen-2xl w-full mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden">
+        
+        <section class="w-full lg:w-5/12 flex flex-col bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden shrink-0 lg:shrink flex-1 lg:flex-none">
+            <div class="py-2 px-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center shrink-0">
+                <h2 id="formTitle" class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <span class="text-xl">📝</span>
+                    <span class="scintille-doux">Nouvelle Note</span>
+                </h2>
+                <span id="draftStatus" class="text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-md transition-opacity duration-300 opacity-0">Brouillon sauvegardé</span>
+            </div>
             
-            // États UI
-            const [activeTab, setActiveTab] = useState('parametrage');
-            const [selectedNiveau, setSelectedNiveau] = useState('');
-            const [selectedDiscipline, setSelectedDiscipline] = useState('');
-            const [selectedAxis, setSelectedAxis] = useState("Globaux");
-            const [selectedYear, setSelectedYear] = useState('');
-            const [selectedEtablissements, setSelectedEtablissements] = useState([]);
-            const [selectedClasses, setSelectedClasses] = useState([]);
-            const [showChartLabels, setShowChartLabels] = useState(false);
-            const [isStacked, setIsStacked] = useState(false);
-            const [chartComments, setChartComments] = useState({}); // Stockage des commentaires
-            const [etabMapping, setEtabMapping] = useState({}); // Mapping pour renommer les établissements
-            const [isRenameExpanded, setIsRenameExpanded] = useState(false); // NOUVEAU: État pour plier/déplier le module
-            // Imports
-            const [uploadError, setUploadError] = useState('');
-            const [isDraggingExcel, setIsDraggingExcel] = useState(false);
-            const [csvText, setCsvText] = useState('');
+            <div class="p-3 overflow-y-auto flex-1 flex flex-col gap-2.5">
+                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    <div class="col-span-1">
+                        <label for="dateInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Date</label>
+                        <input type="date" id="dateInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50" required>
+                    </div>
+                    <div class="col-span-1">
+                        <label for="timeInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5" title="Laissez vide pour la journée entière">Heure (opt.)</label>
+                        <input type="time" id="timeInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50" title="Laissez vide pour la journée entière">
+                    </div>
+                    <div class="col-span-1 sm:col-span-1">
+                        <label for="yearInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Année sc.</label>
+                        <input type="text" id="yearInput" placeholder="Ex: 2026-2027" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50" required>
+                    </div>
+                    <div class="col-span-3 sm:col-span-2">
+                        <label for="nameInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Nom Prénom</label>
+                        <input type="text" id="nameInput" list="namesList" placeholder="Nom de la personne" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50" required>
+                        <datalist id="namesList"></datalist>
+                    </div>
+                </div>
 
-            // Base de données & Autosave
-            const [isDbReady, setIsDbReady] = useState(false);
-            const [dbStatus, setDbStatus] = useState('');
-
-            const COLORS = {
-                satisfaisant: '#16a34a',
-                fragile: '#f59e0b',
-                besoins: '#dc2626',
-                restitution: '#94a3b8'
-            };
-
-            // Écoute de l'initialisation Firebase
-            useEffect(() => {
-                const handleReady = () => setIsDbReady(true);
-                window.addEventListener('firebase-ready', handleReady);
-                if (window.FB && window.FB.auth && window.FB.auth.currentUser) setIsDbReady(true);
-                return () => window.removeEventListener('firebase-ready', handleReady);
-            }, []);
-
-            const saveToCloud = async (isAuto = false) => {
-                if (!isDbReady || !window.FB.auth.currentUser) return;
-                try {
-                    if (!isAuto) setDbStatus('⏳ Sauvegarde en cours...');
-                    const userId = window.FB.auth.currentUser.uid;
-                    const docRef = window.FB.doc(window.FB.db, 'artifacts', appId, 'users', userId, 'dashboard', 'save');
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div class="col-span-1">
+                        <label for="roleInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Qualité</label>
+                        <select id="roleInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50 cursor-pointer">
+                            <option value="Professeur">Professeur</option>
+                            <option value="Élève">Élève</option>
+                            <option value="Personnel de direction">Pers. direction</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
                     
-                    const payload = JSON.stringify({
-                        evalFiles, csvText, selectedNiveau, selectedDiscipline, selectedAxis, selectedYear, selectedClasses, selectedEtablissements, chartComments, showChartLabels, isStacked, etabMapping
-                    });
+                    <div id="teacherSubjectContainer" class="col-span-1 sm:col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="teacherSubjectInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Matière enseignée</label>
+                        <input type="text" id="teacherSubjectInput" list="subjectsList" placeholder="Ex: Mathématiques..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                        <datalist id="subjectsList"></datalist>
+                    </div>
                     
-                    await window.FB.setDoc(docRef, { data: payload });
-                    if (!isAuto) {
-                        setDbStatus('✅ Sauvegardé avec succès');
-                        setTimeout(() => setDbStatus(''), 4000);
-                    }
-                } catch(e) {
-                    console.error(e);
-                    if (!isAuto) setDbStatus('❌ Erreur de sauvegarde');
-                }
-            };
-
-            const loadFromCloud = async () => {
-                if (!isDbReady || !window.FB.auth.currentUser) return;
-                try {
-                    setDbStatus('⏳ Chargement...');
-                    const userId = window.FB.auth.currentUser.uid;
-                    const docRef = window.FB.doc(window.FB.db, 'artifacts', appId, 'users', userId, 'dashboard', 'save');
-                    const docSnap = await window.FB.getDoc(docRef);
-                    
-                    if (docSnap.exists()) {
-                        const payload = JSON.parse(docSnap.data().data);
-                        setEvalFiles(payload.evalFiles || []);
-                        processCSVText(payload.csvText || ''); // Recalcule les correspondances PRONOTE
-                        
-                        // Restauration des sélections si elles existent
-                        if (payload.selectedNiveau) setSelectedNiveau(payload.selectedNiveau);
-                        if (payload.selectedDiscipline) setSelectedDiscipline(payload.selectedDiscipline);
-                        if (payload.selectedAxis) setSelectedAxis(payload.selectedAxis);
-                        if (payload.selectedYear) setSelectedYear(payload.selectedYear);
-                        if (payload.selectedClasses) setSelectedClasses(payload.selectedClasses);
-                        if (payload.selectedEtablissements) setSelectedEtablissements(payload.selectedEtablissements);
-                        if (payload.chartComments) setChartComments(payload.chartComments);
-                        if (payload.etabMapping) setEtabMapping(payload.etabMapping);
-                        if (payload.showChartLabels !== undefined) setShowChartLabels(payload.showChartLabels);
-                        if (payload.isStacked !== undefined) setIsStacked(payload.isStacked);
-                        
-                        setDbStatus('✅ Données restaurées');
-                    } else {
-                        setDbStatus('ℹ️ Aucune sauvegarde trouvée');
-                    }
-                    setTimeout(() => setDbStatus(''), 4000);
-                } catch(e) {
-                    console.error(e);
-                    setDbStatus('❌ Erreur de chargement');
-                }
-            };
-
-            const exportLocalSave = () => {
-                const now = new Date();
-                const pad = (n) => n.toString().padStart(2, '0');
-                // Formatage : EVAL_JJ_MM_AAAA_HHhMM.json
-                const dateStr = `${pad(now.getDate())}_${pad(now.getMonth() + 1)}_${now.getFullYear()}_${pad(now.getHours())}h${pad(now.getMinutes())}`;
-                const fileName = `EVAL_${dateStr}.json`;
-
-                const payload = JSON.stringify({
-                    evalFiles, csvText, selectedNiveau, selectedDiscipline, selectedAxis, selectedYear, selectedClasses, selectedEtablissements, chartComments, showChartLabels, isStacked, etabMapping
-                });
-                
-                const blob = new Blob([payload], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                setDbStatus(`✅ Fichier ${fileName} téléchargé`);
-                setTimeout(() => setDbStatus(''), 4000);
-            };
-
-            const importLocalSave = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    try {
-                        const payload = JSON.parse(evt.target.result);
-                        setEvalFiles(payload.evalFiles || []);
-                        processCSVText(payload.csvText || '');
-                        if (payload.selectedNiveau) setSelectedNiveau(payload.selectedNiveau);
-                        if (payload.selectedDiscipline) setSelectedDiscipline(payload.selectedDiscipline);
-                        if (payload.selectedAxis) setSelectedAxis(payload.selectedAxis);
-                        if (payload.selectedYear) setSelectedYear(payload.selectedYear);
-                        if (payload.selectedClasses) setSelectedClasses(payload.selectedClasses);
-                        if (payload.selectedEtablissements) setSelectedEtablissements(payload.selectedEtablissements);
-                        if (payload.chartComments) setChartComments(payload.chartComments);
-                        if (payload.etabMapping) setEtabMapping(payload.etabMapping);
-                        if (payload.showChartLabels !== undefined) setShowChartLabels(payload.showChartLabels);
-                        if (payload.isStacked !== undefined) setIsStacked(payload.isStacked);
-                        setDbStatus('✅ Fichier local restauré');
-                    } catch (err) {
-                        console.error(err);
-                        setDbStatus('❌ Erreur fichier JSON');
-                    }
-                    setTimeout(() => setDbStatus(''), 4000);
-                };
-                reader.readAsText(file);
-                e.target.value = ''; // Reset de l'input
-            };
-
-            const exportToWord = () => {
-                setDbStatus('⏳ Génération Word...');
-                
-                let wordHtml = `
-                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                    <head>
-                        <meta charset='utf-8'>
-                        <title>Rapport d'évaluations</title>
-                        <style>
-                            body { font-family: 'Calibri', 'Arial', sans-serif; color: #000; }
-                            h1 { text-align: center; color: #000091; font-size: 22pt; margin-bottom: 5px; }
-                            h2 { text-align: center; color: #3b82f6; font-size: 14pt; margin-top: 0; margin-bottom: 30px; text-transform: capitalize; }
-                            .chart-block { margin-bottom: 40px; text-align: center; page-break-inside: avoid; }
-                            .comment { font-size: 11pt; text-align: left; margin-top: 15px; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Évaluations Nationales - Niveau ${selectedNiveau}ème</h1>
-                        <h2>${selectedDiscipline} | ${selectedAxis} ${selectedAxis !== "Évolution multi-annuelle" ? `(${selectedYear})` : ''}</h2>
-                `;
-
-                // Capturer les graphiques
-                const containers = document.querySelectorAll('.print-chart-container');
-                containers.forEach(container => {
-                    const canvas = container.querySelector('canvas');
-                    const textarea = container.querySelector('textarea');
-                    const commentText = textarea ? textarea.value : '';
-                    
-                    // Récupération de l'analyse automatique générée par le composant
-                    const autoSummary = container.getAttribute('data-summary') || '';
-
-                    if (canvas) {
-                        // Capture du canvas en haute qualité
-                        const imgData = canvas.toDataURL('image/png', 1.0);
-                        
-                        // Construction du bloc de texte avec le résumé auto et/ou le commentaire libre
-                        let textContent = '';
-                        if (autoSummary) textContent += `<i><b>Commentaire(s) :</b> ${autoSummary}</i><br>`;
-                        if (commentText) textContent += `${autoSummary ? '<br>' : ''}<b>Analyse de l'équipe pédagogique :</b><br><i>${commentText.replace(/\n/g, '<br>')}</i>`;
-
-                        wordHtml += `
-                            <div class="chart-block">
-                                <img src="${imgData}" style="width: 100%; max-width: 700px; height: auto;" />
-                                ${textContent ? `<div class="comment">${textContent}</div>` : ''}
-                            </div>
-                        `;
-                    }
-                });
-
-                wordHtml += `</body></html>`;
-
-                // Forcer le téléchargement au format .doc
-                const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `Rapport_Evaluations_${selectedNiveau}e_${selectedDiscipline}.doc`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                setDbStatus('✅ Rapport Word généré');
-                setTimeout(() => setDbStatus(''), 4000);
-            };
-
-            // Auto-Save : Déclenche une sauvegarde 5 secondes après la dernière modification
-            useEffect(() => {
-                if (!isDbReady || (evalFiles.length === 0 && !csvText)) return;
-                const timer = setTimeout(() => saveToCloud(true), 5000);
-                return () => clearTimeout(timer);
-            }, [evalFiles, csvText, selectedNiveau, selectedDiscipline, selectedAxis, selectedYear, selectedClasses, selectedEtablissements, chartComments, showChartLabels, isStacked, etabMapping, isDbReady]);
-
-            const processExcelFile = (file) => {
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    const bstr = evt.target.result;
-                    const wb = XLSX.read(bstr, { type: 'binary' });
-                    let allData = [];
-
-                    wb.SheetNames.forEach(sheetName => {
-                        const match = sheetName.match(/EVA(\d+)_(.+)/i);
-                        if (match) {
-                            const niveau = match[1];
-                            const discipline = match[2].trim().toLowerCase();
-                            const ws = wb.Sheets[sheetName];
-                            const data = XLSX.utils.sheet_to_json(ws);
-
-                            data.forEach(row => {
-                                allData.push({ ...row, _niveau: niveau, _discipline: discipline });
-                            });
-                        }
-                    });
-                    
-                    const yearMatch = file.name.match(/(20\d{2})/);
-                    const defaultYear = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
-                    const uniqueId = Date.now().toString() + Math.random().toString();
-
-                    setEvalFiles(prev => [...prev, { id: uniqueId, name: file.name, year: defaultYear, data: allData }]);
-                };
-                reader.readAsBinaryString(file);
-            };
-
-            const processCSVText = (text) => {
-                setCsvText(text);
-                if (!text || text.trim() === '') {
-                    setStudentData({});
-                    setUploadError('');
-                    return;
-                }
-                
-                setUploadError('');
-                Papa.parse(text.trim(), {
-                    header: true, skipEmptyLines: true,
-                    complete: function(results) {
-                        const keys = results.meta.fields;
-                        
-                        const getNormCol = (keywords) => keys.find(h => {
-                            if(!h) return false;
-                            const norm = normalizeString(h);
-                            return keywords.some(kw => norm.includes(kw));
-                        });
-
-                        const classeCol = getNormCol(['classe', 'division']);
-                        const sexeCol = getNormCol(['sexe', 'genre']);
-                        const etabCol = getNormCol(['origine', 'etab', 'provenance']);
-                        
-                        const prenomCol = keys.find(h => h && ['prenom', 'prenomdeleleve', 'prenoms', 'prenomeleve'].includes(normalizeString(h))); 
-                        const nomCol = keys.find(h => h && ['nom', 'nomdeleleve', 'noms', 'nomdefamille', 'nomusage', 'nomdusage', 'nomeleve'].includes(normalizeString(h))); 
-
-                        if (nomCol && prenomCol) {
-                            let dict = {};
-                            results.data.forEach(row => {
-                                const nom = row[nomCol] || '';
-                                const prenom = row[prenomCol] || '';
-                                const cleDirecte = normalizeString(nom) + normalizeString(prenom);
-                                const cleInverse = normalizeString(prenom) + normalizeString(nom);
-                                
-                                let sexeBrut = sexeCol ? (row[sexeCol] || '') : '';
-                                let sexe = 'Non défini';
-                                if (sexeBrut.toUpperCase().trim() === 'G' || sexeBrut.toUpperCase().trim() === 'M') sexe = 'Garçons';
-                                else if (sexeBrut.toUpperCase().trim() === 'F') sexe = 'Filles';
-
-                                let origine = etabCol ? (row[etabCol] || 'Non défini') : 'Non défini';
-                                if (origine !== 'Non défini') {
-                                    origine = origine.replace(/^[0-9A-Z]{8}\s*-\s*/, '');
-                                    const lastDash = origine.lastIndexOf(" - ");
-                                    if (lastDash !== -1) origine = origine.substring(0, lastDash);
-                                    origine = origine.replace(/E\.E\.PU\s*ECOLE\s*(PRIMAIRE|ELEMENTAIRE)\s*PUBLIQUE/i, '').trim();
-                                    origine = origine.replace(/E\.E\.PR\s*ECOLE\s*(PRIMAIRE|ELEMENTAIRE)\s*PRIVEE/i, '').trim();
-                                    origine = origine.replace(/CLG\s*COLLEGE\s*PRIVE?/i, '').trim();
-                                }
-
-                                const info = { sexe, origine: origine || 'Non défini', classe: classeCol ? (row[classeCol] || 'Non défini') : 'Non défini' };
-                                dict[cleDirecte] = info;
-                                dict[cleInverse] = info;
-                            });
-                            setStudentData(dict);
-                        } else {
-                            setUploadError("⚠️ Colonnes 'Nom' et 'Prénom' introuvables dans les données collées.");
-                        }
-                    }
-                });
-            };
-
-            useEffect(() => {
-                if (evalFiles.length > 0) {
-                    let allMerged = [];
-                    evalFiles.forEach(file => {
-                        const mergedFile = file.data.map(row => {
-                            const keys = Object.keys(row);
-                            const prenomCol = keys.find(h => h && ['prenom', 'prenomdeleleve', 'prenoms', 'prenomeleve'].includes(normalizeString(h)));
-                            const nomCol = keys.find(h => h && ['nom', 'nomdeleleve', 'noms', 'nomdefamille', 'nomusage', 'nomdusage', 'nomeleve'].includes(normalizeString(h)));
-
-                            const nom = nomCol ? row[nomCol] : '';
-                            const prenom = prenomCol ? row[prenomCol] : '';
-                            
-                            const cle = normalizeString(nom) + normalizeString(prenom);
-                            const info = studentData[cle] || { sexe: 'Inconnu', origine: 'Inconnu', classe: 'Non défini' };
-                            
-                            const excelClasseKey = keys.find(k => k && (normalizeString(k) === 'classe' || normalizeString(k) === 'division'));
-                            const excelClasse = excelClasseKey ? row[excelClasseKey] : null;
-                            const classeClean = (excelClasse && excelClasse.toString().trim() !== '') ? excelClasse : (info.classe && info.classe !== 'Non défini' ? info.classe : 'Non défini');
-
-                            const finalOrigine = (etabMapping[info.origine] !== undefined && etabMapping[info.origine].trim() !== '') 
-                                                 ? etabMapping[info.origine] 
-                                                 : info.origine;
-
-                            return {
-                                ...row,
-                                _annee: file.year,
-                                _sexe: info.sexe,
-                                _origineBrute: info.origine,
-                                _origine: finalOrigine,
-                                _classe: classeClean.toString().replace(/\.0$/, '').trim()
-                            };
-                        });
-                        allMerged = [...allMerged, ...mergedFile];
-                    });
-                    setMergedData(allMerged);
-                } else setMergedData([]);
-            }, [evalFiles, studentData, etabMapping]);
-
-            // Extraction des établissements uniques pour le renommage
-            const uniqueEtabs = useMemo(() => {
-                const etabs = new Set();
-                Object.values(studentData).forEach(info => {
-                    if (info.origine && info.origine !== 'Non défini' && info.origine !== 'Inconnu') etabs.add(info.origine);
-                });
-                return Array.from(etabs).sort();
-            }, [studentData]);
-
-            // Listes de sélections automatiques
-            const anneesDispo = useMemo(() => [...new Set(evalFiles.map(f => f.year))].sort().reverse(), [evalFiles]);
-            const niveauxDispo = useMemo(() => [...new Set(mergedData.map(d => d._niveau))].sort((a,b)=>b-a), [mergedData]);
-            const disciplinesDispo = useMemo(() => [...new Set(mergedData.map(d => d._discipline))].sort(), [mergedData]);
-
-            useEffect(() => {
-                if (anneesDispo.length > 0 && !anneesDispo.includes(selectedYear)) setSelectedYear(anneesDispo[0]);
-                if (niveauxDispo.length > 0 && !niveauxDispo.includes(selectedNiveau)) setSelectedNiveau(niveauxDispo[0]);
-                if (disciplinesDispo.length > 0 && !disciplinesDispo.includes(selectedDiscipline)) setSelectedDiscipline(disciplinesDispo[0]);
-            }, [anneesDispo, niveauxDispo, disciplinesDispo, selectedYear, selectedNiveau, selectedDiscipline]);
-
-            const currentCohort = useMemo(() => {
-                if (!mergedData.length) return [];
-                let cohort = mergedData.filter(d => d._niveau === selectedNiveau && d._discipline === selectedDiscipline);
-                if (selectedAxis !== "Évolution multi-annuelle") cohort = cohort.filter(d => d._annee === selectedYear);
-                return cohort;
-            }, [mergedData, selectedNiveau, selectedDiscipline, selectedAxis, selectedYear]);
-
-            // Génération des groupes (Établissements, Classes)
-            const availableEtablissements = useMemo(() => {
-                return Array.from(new Set(currentCohort.map(s => s._origine))).filter(g => g && g !== 'Inconnu' && g !== 'Non défini').sort();
-            }, [currentCohort]);
-
-            useEffect(() => { setSelectedEtablissements(availableEtablissements); }, [availableEtablissements]);
-
-            const availableClasses = useMemo(() => {
-                return Array.from(new Set(currentCohort.map(s => s._classe))).filter(c => c && c !== 'Inconnu' && c !== 'Non défini').sort();
-            }, [currentCohort]);
-
-            useEffect(() => { setSelectedClasses(availableClasses); }, [availableClasses]);
-
-            const chartsToRender = useMemo(() => {
-                if (!currentCohort.length) return [];
-
-                const compMap = new Map();
-                currentCohort.forEach(student => {
-                    Object.keys(student).forEach(key => {
-                        const normKey = normalizeString(key);
-                        const isExcluded = ['nom', 'nomdeleleve', 'noms', 'nomdefamille', 'nomusage', 'nomdusage', 'nomeleve'].includes(normKey) || 
-                                           ['prenom', 'prenomdeleleve', 'prenoms', 'prenomeleve'].includes(normKey) || 
-                                           normKey === 'classe' || normKey === 'division' || normKey === 'sexe' || normKey === 'genre' || 
-                                           normKey.startsWith('date') || normKey.startsWith('unnamed') || key.startsWith('_');
-                            
-                        if (!isExcluded) {
-                            if (!compMap.has(normKey)) {
-                                compMap.set(normKey, { displayName: key.replace(/\n/g, ' - '), originalKeys: new Set([key]) });
-                            } else {
-                                compMap.get(normKey).originalKeys.add(key);
-                            }
-                        }
-                    });
-                });
-
-                let groups = [];
-                let getGroup = (s) => 'Cohorte';
-                let axeTitle = selectedAxis;
-
-                if (selectedAxis === 'Globaux') groups = ['Cohorte'];
-                else if (selectedAxis === 'Comparatif par Classe') {
-                    groups = availableClasses.filter(c => selectedClasses.includes(c));
-                    getGroup = (s) => s._classe;
-                    axeTitle = "Classes / Divisions";
-                } else if (selectedAxis === 'Comparatif Filles / Garçons') {
-                    groups = Array.from(new Set(currentCohort.map(s => s._sexe))).filter(g => g !== 'Inconnu' && g !== 'Non défini').sort();
-                    getGroup = (s) => s._sexe;
-                } else if (selectedAxis === "Comparatif par Établissement d'origine") {
-                    groups = availableEtablissements.filter(g => selectedEtablissements.includes(g));
-                    getGroup = (s) => s._origine;
-                } else if (selectedAxis === "Évolution multi-annuelle") {
-                    groups = [...anneesDispo].reverse(); 
-                    getGroup = (s) => s._annee;
-                    axeTitle = "Années Scolaires";
-                }
-
-                const individualCharts = Array.from(compMap.values()).map(compData => {
-                    const stats = {};
-                    groups.forEach(g => stats[g] = { 'Satisfaisant': 0, 'Fragile': 0, 'À besoins': 0, 'Pas de restitution': 0, total: 0 });
-
-                    currentCohort.forEach(s => {
-                        const g = getGroup(s);
-                        if (!stats[g]) return;
-                        let val = '';
-                        for (let k of compData.originalKeys) {
-                            if (s[k]) { val = s[k].toString().trim().toLowerCase(); break; }
-                        }
-                        if (val && (val === 'satisfaisant' || val === 'fragile' || val.includes('besoins') || val.includes('restitution'))) {
-                            stats[g].total += 1;
-                            if (val === 'satisfaisant') stats[g]['Satisfaisant'] += 1;
-                            else if (val === 'fragile') stats[g]['Fragile'] += 1;
-                            else if (val.includes('besoins')) stats[g]['À besoins'] += 1;
-                            else if (val.includes('restitution')) stats[g]['Pas de restitution'] += 1;
-                        }
-                    });
-
-                    const ds = [
-                        { label: 'Satisfaisant', bg: COLORS.satisfaisant, d: [], c: [] },
-                        { label: 'Fragile', bg: COLORS.fragile, d: [], c: [] },
-                        { label: 'À besoins', bg: COLORS.besoins, d: [], c: [] },
-                        { label: 'Pas de restitution', bg: COLORS.restitution, d: [], c: [] },
-                    ];
-
-                    groups.forEach(g => {
-                        const st = stats[g];
-                        const t = st.total > 0 ? st.total : 1;
-                        ds[0].c.push(st['Satisfaisant']); ds[0].d.push((st['Satisfaisant'] / t) * 100);
-                        ds[1].c.push(st['Fragile']);      ds[1].d.push((st['Fragile'] / t) * 100);
-                        ds[2].c.push(st['À besoins']);    ds[2].d.push((st['À besoins'] / t) * 100);
-                        ds[3].c.push(st['Pas de restitution']); ds[3].d.push((st['Pas de restitution'] / t) * 100);
-                    });
-
-                    return {
-                        title: compData.displayName, axisLabels: groups, subtitle: axeTitle,
-                        datasets: ds.map(x => ({ label: x.label, backgroundColor: x.bg, data: x.d, counts: x.c }))
-                    };
-                });
-
-                // BILAN GLOBAL pour 'Globaux' ET 'Évolution multi-annuelle'
-                if (selectedAxis === 'Globaux' || selectedAxis === 'Évolution multi-annuelle') {
-                    const sumStats = {};
-                    groups.forEach(g => sumStats[g] = { 'Satisfaisant': 0, 'Fragile': 0, 'À besoins': 0, 'Pas de restitution': 0, total: 0 });
-
-                    currentCohort.forEach(s => {
-                        const g = getGroup(s);
-                        if (!sumStats[g]) return;
-                        Array.from(compMap.values()).forEach(compData => {
-                            let val = '';
-                            for (let k of compData.originalKeys) {
-                                if (s[k]) { val = s[k].toString().trim().toLowerCase(); break; }
-                            }
-                            if (val && (val === 'satisfaisant' || val === 'fragile' || val.includes('besoins') || val.includes('restitution'))) {
-                                sumStats[g].total += 1;
-                                if (val === 'satisfaisant') sumStats[g]['Satisfaisant'] += 1;
-                                else if (val === 'fragile') sumStats[g]['Fragile'] += 1;
-                                else if (val.includes('besoins')) sumStats[g]['À besoins'] += 1;
-                                else if (val.includes('restitution')) sumStats[g]['Pas de restitution'] += 1;
-                            }
-                        });
-                    });
-
-                    const ds = [
-                        { label: 'Satisfaisant', backgroundColor: COLORS.satisfaisant, data: [], counts: [] },
-                        { label: 'Fragile', backgroundColor: COLORS.fragile, data: [], counts: [] },
-                        { label: 'À besoins', backgroundColor: COLORS.besoins, data: [], counts: [] },
-                        { label: 'Pas de restitution', backgroundColor: COLORS.restitution, data: [], counts: [] }
-                    ];
-
-                    let hasData = false;
-                    groups.forEach(g => {
-                        const st = sumStats[g];
-                        if (st.total > 0) hasData = true;
-                        const t = st.total > 0 ? st.total : 1;
-                        ds[0].counts.push(st['Satisfaisant']); ds[0].data.push((st['Satisfaisant'] / t) * 100);
-                        ds[1].counts.push(st['Fragile']);      ds[1].data.push((st['Fragile'] / t) * 100);
-                        ds[2].counts.push(st['À besoins']);    ds[2].data.push((st['À besoins'] / t) * 100);
-                        ds[3].counts.push(st['Pas de restitution']); ds[3].data.push((st['Pas de restitution'] / t) * 100);
-                    });
-
-                    if (hasData) {
-                        return [{
-                            title: "🏆 BILAN GLOBAL (Toutes compétences confondues)",
-                            axisLabels: selectedAxis === 'Globaux' ? ['Synthèse de la discipline'] : groups,
-                            subtitle: selectedAxis === 'Évolution multi-annuelle' ? "Années Scolaires" : "Moyenne de la cohorte",
-                            datasets: ds
-                        }, ...individualCharts];
-                    }
-                }
-                return individualCharts;
-            }, [currentCohort, selectedAxis, selectedEtablissements, selectedClasses, anneesDispo, availableEtablissements, availableClasses]);
-
-            const statsPointage = useMemo(() => {
-                if (!currentCohort.length) return null;
-                const tot = currentCohort.length;
-                const match = currentCohort.filter(d => d._sexe && d._sexe !== 'Inconnu' && d._sexe !== 'Non défini').length;
-                return { total: tot, matched: match, percent: tot > 0 ? Math.round((match/tot)*100) : 0 };
-            }, [currentCohort]);
-
-            return (
-                <div className="min-h-screen pb-12">
-                    {}
-                    <header className="marianne-bg shadow-lg no-print text-white py-5 px-6 sticky top-0 z-50">
-                        <div className="max-w-7xl mx-auto flex flex-col xl:flex-row justify-between items-center gap-4">
-                            <div>
-                                <h1 className="text-2xl md:text-3xl font-black tracking-tight flex flex-wrap items-center gap-2">
-                                    🧭 <span><span className="text-white">PERDIR</span><span className="text-yellow-300">FORMANCE</span> LOGI-EVAL V1 <span className="text-xl font-medium text-blue-100 hidden md:inline-block">| Pour les collèges</span></span>
-                                </h1>
-                                <p className="text-blue-100 font-medium text-sm mt-1 ml-9">Tableau de Bord des Évaluations Nationales</p>
-                            </div>
-                            
-                            <div className="flex flex-wrap items-center gap-3">
-                                {dbStatus && <span className="text-blue-100 text-xs font-bold bg-blue-900/30 px-3 py-1.5 rounded-full animate-pulse">{dbStatus}</span>}
-                                
-                                <label className="bg-blue-800 hover:bg-blue-700 border border-blue-600 shadow-md px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer text-white" title="Charger un paramétrage (.json)">
-                                    📂 Ouvrir
-                                    <input type="file" accept=".json" onChange={importLocalSave} className="hidden" />
-                                </label>
-
-                                <button onClick={exportLocalSave} className="bg-blue-700 hover:bg-blue-600 border border-blue-500 shadow-md px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2" title="Télécharger le paramétrage (.json)">
-                                    💾 Sauvegarder
-                                </button>
-                                
-                                {activeTab === 'dashboard' && (
-                                    <div className="flex bg-white/10 rounded-lg p-1 ml-2 border border-white/20">
-                                        <button onClick={() => window.print()} className="bg-white text-blue-900 px-3 py-1.5 rounded-md text-sm font-bold shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
-                                            🖨 PDF
-                                        </button>
-                                        <button onClick={exportToWord} className="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-md text-sm font-bold shadow-sm hover:bg-blue-100 transition-all flex items-center gap-2 ml-1" title="Exporter vers Microsoft Word">
-                                            📝 Word
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Navigation sous forme de "Pillules" */}
-                    <div className="max-w-7xl mx-auto px-6 mt-8 mb-6 no-print">
-                        <div className="flex gap-4 p-1.5 bg-white rounded-xl shadow-sm border border-slate-200 inline-flex">
-                            <button 
-                                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'parametrage' ? 'bg-blue-100 text-blue-800 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
-                                onClick={() => setActiveTab('parametrage')}
-                            >
-                                ⚙️ Paramétrage & Données
-                            </button>
-                            <button 
-                                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'dashboard' ? 'bg-blue-100 text-blue-800 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
-                                onClick={() => setActiveTab('dashboard')}
-                            >
-                                📊 Tableau de bord
-                            </button>
-                        </div>
+                    <div id="parentStudentNameContainer" class="hidden col-span-1 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="parentStudentNameInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Enfant</label>
+                        <input type="text" id="parentStudentNameInput" list="namesList" placeholder="Ex: Jules Dupont" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
                     </div>
 
-                    {}
-                    <main className="max-w-7xl mx-auto px-6 print:mt-0 print:px-0">
-                        {activeTab === 'parametrage' && (
-                            <section className="bg-white p-8 rounded-2xl shadow-md border border-slate-200 fade-in">
-                                <h2 className="text-xl font-bold text-slate-800 mb-6 border-b pb-4 flex items-center gap-2">
-                                    📥 Importation des bases de données
-                                </h2>
-                                
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div 
-                                        className={`relative border-2 border-dashed p-8 rounded-xl text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px]
-                                            ${isDraggingExcel ? 'border-blue-500 bg-blue-50 scale-[1.02]' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-blue-400'}`}
-                                        onDragOver={(e) => { e.preventDefault(); setIsDraggingExcel(true); }}
-                                        onDragLeave={(e) => { e.preventDefault(); setIsDraggingExcel(false); }}
-                                        onDrop={(e) => { 
-                                            e.preventDefault(); setIsDraggingExcel(false); 
-                                            if (e.dataTransfer.files) Array.from(e.dataTransfer.files).forEach(processExcelFile);
-                                        }}
-                                        onClick={() => document.getElementById('excelInput').click()}
-                                    >
-                                        <input id="excelInput" type="file" multiple accept=".xlsx" onChange={(e) => Array.from(e.target.files).forEach(processExcelFile)} className="hidden" />
-                                        <span className="text-5xl mb-4">📗</span>
-                                        <h3 className="text-base font-bold text-slate-700 mb-2">Fichiers Évaluations (.xlsx)</h3>
-                                        <p className="text-sm text-slate-500 font-medium">Glissez vos fichiers ici ou cliquez pour parcourir.</p>
-                                    </div>
+                    <div id="studentClassContainer" class="hidden col-span-1 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="studentClassInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Classe</label>
+                        <input type="text" id="studentClassInput" list="classesList" placeholder="Ex: 3ème A" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                        <datalist id="classesList"></datalist>
+                    </div>
 
-                                    <div className="relative border p-6 rounded-xl flex flex-col bg-slate-50 border-slate-300 focus-within:border-blue-500 focus-within:bg-blue-50 transition-colors shadow-inner">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                                📋 Base Élèves (Copier-Coller)
-                                            </h3>
-                                            {Object.keys(studentData).length > 0 && (
-                                                <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold shadow-sm">
-                                                    ✓ {Math.floor(Object.keys(studentData).length / 2)} élèves traités
-                                                </span>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="flex items-start gap-2.5 mb-3 px-1">
-                                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse mt-0.5 flex-shrink-0 shadow-sm"></span>
-                                            <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                                A partir du client EDT, allez sur ELEVES\CLASSES (élèves affectés dans une classe), puis, dans personnalisation de la liste (🔧) : Faites passer Etab. d'origine à droite, puis validez;<br/>
-                                                Copiez dans le presse papier en .csv et collez dans ce champ !
-                                            </p>
-                                        </div>
-
-                                        <textarea 
-                                            className="w-full flex-1 p-4 text-xs font-mono bg-white border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                                            placeholder="Collez les données ici..."
-                                            value={csvText} onChange={(e) => processCSVText(e.target.value)}
-                                        ></textarea>
-                                        {uploadError && <div className="mt-3 text-red-600 font-bold text-xs bg-red-50 p-2 rounded-lg border border-red-200">⚠ {uploadError}</div>}
-                                    </div>
-                                </div>
-
-                                {evalFiles.length > 0 && (
-                                    <div className="mt-8 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                                        <div className="bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 border-b border-slate-200 flex justify-between items-center">
-                                            <span>📚 Fichiers d'évaluations chargés ({evalFiles.length})</span>
-                                            <span className="text-xs font-normal text-slate-500">Vérifiez les années de référence ci-dessous</span>
-                                        </div>
-                                        <div className="divide-y divide-slate-100">
-                                            {evalFiles.map(file => (
-                                                <div key={file.id} className="p-4 flex flex-wrap items-center gap-4 bg-white hover:bg-slate-50 transition-colors">
-                                                    <div className="flex-1 min-w-[200px]">
-                                                        <p className="text-sm font-bold text-blue-900 truncate">{file.name}</p>
-                                                        <p className="text-xs text-slate-500 font-medium mt-1">{file.data.length} lignes analysées</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <label className="text-xs font-bold text-slate-600">Année :</label>
-                                                        <input 
-                                                            type="text" value={file.year} 
-                                                            onChange={(e) => setEvalFiles(prev => prev.map(f => f.id === file.id ? {...f, year: e.target.value} : f))}
-                                                            className="w-20 text-center font-bold text-sm border-2 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-0 p-1.5"
-                                                        />
-                                                        <button onClick={() => setEvalFiles(prev => prev.filter(f => f.id !== file.id))} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
-                                                            ❌
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
-                        )}
-
-                        {activeTab === 'dashboard' && (
-                            <div className="fade-in print:block">
-                                <section className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 mb-8 no-print">
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">🎓 Niveau</label>
-                                            <select value={selectedNiveau} onChange={(e) => setSelectedNiveau(e.target.value)} className="w-full bg-slate-50 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2.5 border font-semibold">
-                                                {niveauxDispo.map(n => <option key={n} value={n}>{n}ème</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">📖 Discipline</label>
-                                            <select value={selectedDiscipline} onChange={(e) => setSelectedDiscipline(e.target.value)} className="w-full bg-slate-50 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2.5 border font-semibold capitalize">
-                                                {disciplinesDispo.map(d => <option key={d} value={d}>{d}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">🎯 Axe d'étude</label>
-                                            <select value={selectedAxis} onChange={(e) => setSelectedAxis(e.target.value)} className="w-full bg-blue-50 border-blue-200 text-blue-900 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2.5 border font-bold">
-                                                <option value="Globaux">🌍 Résultats Globaux</option>
-                                                <option value="Comparatif par Classe">🏫 Comparatif par Classe</option>
-                                                <option value="Comparatif Filles / Garçons">🚻 Comparatif Filles / Garçons</option>
-                                                <option value="Comparatif par Établissement d'origine">🎒 Établissement d'origine</option>
-                                                <option value="Évolution multi-annuelle">📉 Évolution multi-annuelle</option>
-                                            </select>
-                                        </div>
-                                        {selectedAxis !== "Évolution multi-annuelle" && (
-                                            <div>
-                                                <label className="block text-sm font-bold text-slate-700 mb-2">📅 Année</label>
-                                                <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full bg-slate-50 border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 p-2.5 border font-semibold">
-                                                    {anneesDispo.map(a => <option key={a} value={a}>{a}</option>)}
-                                                </select>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Filtres de classes */}
-                                    {selectedAxis === "Comparatif par Classe" && availableClasses.length > 0 && (
-                                        <div className="mt-6 pt-5 border-t border-slate-100">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <label className="text-sm font-bold text-slate-700">Filtre des classes :</label>
-                                                <div className="space-x-3">
-                                                    <button onClick={() => setSelectedClasses(availableClasses)} className="text-xs text-blue-600 hover:underline font-bold bg-blue-50 px-2 py-1 rounded">Tout cocher</button>
-                                                    <button onClick={() => setSelectedClasses([])} className="text-xs text-slate-500 hover:underline font-bold bg-slate-50 px-2 py-1 rounded">Tout décocher</button>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableClasses.map(cls => (
-                                                    <label key={cls} className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm cursor-pointer transition-all font-semibold ${selectedClasses.includes(cls) ? 'bg-blue-50 border-blue-400 text-blue-900 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                                                        <input type="checkbox" className="hidden" checked={selectedClasses.includes(cls)} onChange={() => setSelectedClasses(p => p.includes(cls) ? p.filter(c => c !== cls) : [...p, cls])} />
-                                                        {selectedClasses.includes(cls) ? '☑' : '☐'} {cls}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Filtres Établissements */}
-                                    {selectedAxis === "Comparatif par Établissement d'origine" && availableEtablissements.length > 0 && (
-                                        <div className="mt-6 pt-5 border-t border-slate-100">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <label className="text-sm font-bold text-slate-700">Filtre des écoles :</label>
-                                                <div className="space-x-3">
-                                                    <button onClick={() => setSelectedEtablissements(availableEtablissements)} className="text-xs text-blue-600 hover:underline font-bold bg-blue-50 px-2 py-1 rounded">Tout cocher</button>
-                                                    <button onClick={() => setSelectedEtablissements([])} className="text-xs text-slate-500 hover:underline font-bold bg-slate-50 px-2 py-1 rounded">Tout décocher</button>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableEtablissements.map(etab => (
-                                                    <label key={etab} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 text-sm cursor-pointer transition-all font-semibold ${selectedEtablissements.includes(etab) ? 'bg-blue-50 border-blue-400 text-blue-900 shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-                                                        <input type="checkbox" className="hidden" checked={selectedEtablissements.includes(etab)} onChange={() => setSelectedEtablissements(p => p.includes(etab) ? p.filter(e => e !== etab) : [...p, etab])} />
-                                                        {selectedEtablissements.includes(etab) ? '☑' : '☐'} {etab}
-                                                    </label>
-                                                ))}
-                                            </div>
-
-                                            {/* MODULE DE RENOMMAGE (Ici dans le dashboard) */}
-                                            {uniqueEtabs.length > 0 && (
-                                                <div className="mt-6 border border-slate-200 rounded-xl overflow-hidden shadow-sm fade-in">
-                                                    <div 
-                                                        className="bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 border-b border-slate-200 flex items-center gap-2 cursor-pointer hover:bg-slate-100 transition-colors"
-                                                        onClick={() => setIsRenameExpanded(!isRenameExpanded)}
-                                                    >
-                                                        <span>🎒 Renommer les établissements d'origine</span>
-                                                        <span className="text-xs font-normal text-slate-500 ml-auto hidden md:inline">Modifiez les noms pour uniformiser vos graphiques</span>
-                                                        <span className="ml-2 bg-white px-2 py-1 rounded shadow-sm border border-slate-200 text-xs flex items-center gap-1 text-slate-600">
-                                                            {isRenameExpanded ? '▲ Replier' : '▼ Déplier'}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    {isRenameExpanded && (
-                                                        <div className="p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            {uniqueEtabs.map(etab => (
-                                                                <div key={etab} className="flex flex-col gap-1.5">
-                                                                    <label className="text-xs font-bold text-slate-500 truncate" title={etab}>{etab}</label>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        className="w-full text-sm font-medium border border-slate-200 rounded-lg p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow shadow-sm"
-                                                                        placeholder="Nouveau nom..."
-                                                                        value={etabMapping[etab] !== undefined ? etabMapping[etab] : etab}
-                                                                        onChange={(e) => setEtabMapping(prev => ({ ...prev, [etab]: e.target.value }))}
-                                                                    />
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* NOUVEAU : Options d'affichage dynamiques */}
-                                    <div className="mt-6 flex flex-wrap items-center gap-4">
-                                        <div className="flex items-center gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowChartLabels(!showChartLabels)}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={showChartLabels}
-                                                onChange={(e) => setShowChartLabels(e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer pointer-events-none"
-                                            />
-                                            <label className="text-sm font-bold text-slate-700 cursor-pointer select-none">
-                                                📊 Afficher les valeurs (% et effectifs)
-                                            </label>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setIsStacked(!isStacked)}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={isStacked}
-                                                onChange={(e) => setIsStacked(e.target.checked)}
-                                                className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer pointer-events-none"
-                                            />
-                                            <label className="text-sm font-bold text-slate-700 cursor-pointer select-none">
-                                                🧬 Vue en diagramme ADN (Barres empilées)
-                                            </label>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                {chartsToRender.length > 0 ? (
-                                    <section>
-                                        <div className="print-header">
-                                            <h2 style={{fontSize: '28px', fontWeight: '900', color: 'black'}}>Évaluations Nationales - Niveau {selectedNiveau}ème</h2>
-                                            <p style={{fontSize: '18px', fontWeight: 'bold', color: 'black', textTransform: 'capitalize', marginTop: '5px'}}>
-                                                {selectedDiscipline} | {selectedAxis} {selectedAxis !== "Évolution multi-annuelle" && `(${selectedYear})`}
-                                            </p>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 print-grid">
-                                            {chartsToRender.map((chartData, idx) => {
-                                                const commentKey = `${selectedNiveau}_${selectedDiscipline}_${selectedAxis}_${chartData.title}`;
-                                                return (
-                                                    <ChartComponent 
-                                                        key={idx}
-                                                        title={chartData.title}
-                                                        data={chartData}
-                                                        axisLabels={chartData.axisLabels}
-                                                        colors={COLORS}
-                                                        subtitle={chartData.subtitle}
-                                                        drawSeparator={selectedAxis === 'Comparatif Filles / Garçons'}
-                                                        showLabels={showChartLabels}
-                                                        isStacked={isStacked}
-                                                        comment={chartComments[commentKey]}
-                                                        onCommentChange={(text) => setChartComments(prev => ({ ...prev, [commentKey]: text }))}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                    </section>
-                                ) : evalFiles.length > 0 ? (
-                                    <div className="text-center py-16 text-slate-500 font-medium bg-white rounded-2xl border border-slate-200 shadow-sm no-print">
-                                        📭 Aucune donnée exploitable pour ces critères.
-                                    </div>
-                                ) : null}
-                            </div>
-                        )}
-                    </main>
-
-                    {/* Pied de page / Footer */}
-                    <footer className="mt-12 pb-8 text-center text-sm text-slate-500 no-print fade-in">
-                        <div className="max-w-7xl mx-auto px-6 border-t border-slate-200 pt-6">
-                            <p className="font-bold text-slate-700">LOGI-EVAL a été conçu par Yannis CHRISTON | 2026.</p>
-                            <p className="mt-1 text-xs">Les données sont exécutées sur le navigateur en local. Le logiciel respecte le RGPD et a été développé grâce à l'IA générative.</p>
-                        </div>
-                    </footer>
+                    <div id="otherRoleContainer" class="hidden col-span-1 sm:col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="otherRoleInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Précisez</label>
+                        <input type="text" id="otherRoleInput" list="otherRolesList" placeholder="Ex: Inspecteur..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                        <datalist id="otherRolesList"></datalist>
+                    </div>
                 </div>
-            );
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="col-span-2">
+                        <label for="motifInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Motif principal</label>
+                        <select id="motifInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50 cursor-pointer">
+                            <!-- Rempli par JavaScript (Paramètres) -->
+                        </select>
+                    </div>
+                    
+                    <div class="col-span-1">
+                        <label for="statusInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Statut</label>
+                        <select id="statusInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50 cursor-pointer">
+                            <option value="en_cours">En cours</option>
+                            <option value="rappel">À rappeler</option>
+                            <option value="cloture">Clôturé</option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-1">
+                        <label for="priorityInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Priorité</label>
+                        <select id="priorityInput" class="w-full border border-slate-300 rounded py-1 px-0.5 sm:px-1.5 text-[10px] sm:text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50 cursor-pointer">
+                            <option value="aucune">⚪ Normale</option>
+                            <option value="court">🔴 Courte</option>
+                            <option value="moyen">🟠 Moyenne</option>
+                            <option value="long">🟢 Longue</option>
+                        </select>
+                    </div>
+                    
+                    <div id="otherMotifContainer" class="hidden col-span-2 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="otherMotifInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Motif précis</label>
+                        <input type="text" id="otherMotifInput" placeholder="Ex: Remise de diplôme..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                    </div>
+                    
+                    <div id="reminderContainer" class="hidden col-span-2 sm:col-span-1 animate-[fadeIn_0.2s_ease-in-out]">
+                        <label for="reminderDateInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Date rappel</label>
+                        <input type="date" id="reminderDateInput" class="w-full border border-slate-300 rounded py-1 px-1.5 text-[10px] sm:text-xs h-7 focus:ring-1 focus:ring-amber-500 bg-amber-50">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="col-span-1">
+                        <label for="urlInput" class="block text-[11px] font-semibold text-slate-700 mb-0.5">Lien (optionnel)</label>
+                        <input type="url" id="urlInput" placeholder="https://..." class="w-full border border-slate-300 rounded py-1 px-1.5 text-xs h-7 focus:ring-1 focus:ring-brand-500 bg-slate-50">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Pièce jointe (&lt; 1.5 Mo)</label>
+                        <div class="flex items-center h-7">
+                            <input type="file" id="fileInput" class="w-full text-[10px] border border-slate-300 rounded py-0.5 px-1 focus:ring-1 focus:ring-brand-500 bg-slate-50 file:mr-1 file:py-0.5 file:px-1.5 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-brand-50 file:text-brand-700 cursor-pointer h-full">
+                            <div id="attachmentPreview" class="hidden items-center justify-between w-full text-[11px] text-brand-700 bg-brand-50 px-2 rounded border border-brand-200 h-full">
+                                <span id="attachmentNameDisplay" class="truncate max-w-[80px] sm:max-w-[120px] font-medium"></span>
+                                <button type="button" id="btnRemoveAttachment" class="text-red-500 hover:text-red-700 font-bold ml-1">✖</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raccourcis dynamiques -->
+                <div id="dynamicShortcutsContainer" class="flex flex-wrap gap-3 px-1 py-1 mt-1 empty:hidden"></div>
+
+                <div class="space-y-1 flex-1 flex flex-col min-h-[450px]">
+                    <div class="border border-slate-300 rounded-md overflow-hidden flex flex-col flex-1 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+                        <div class="bg-slate-100 border-b border-slate-300 p-1 flex flex-wrap gap-x-1 gap-y-1.5 items-center shrink-0">
+                            <!-- Toolbar WYSIWYG -->
+                            <div class="flex items-center gap-0.5">
+                                <button type="button" data-cmd="undo" class="editor-btn p-1 text-slate-600 hover:bg-slate-200 hover:text-brand-700 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg></button>
+                                <button type="button" data-cmd="redo" class="editor-btn p-1 text-slate-600 hover:bg-slate-200 hover:text-brand-700 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg></button>
+                                <div class="w-px h-4 bg-slate-300 mx-0.5"></div>
+                                <button type="button" data-cmd="formatBlock" data-arg="H3" class="editor-btn p-1 text-slate-700 font-bold hover:bg-slate-200 rounded text-xs">T1</button>
+                                <button type="button" data-cmd="formatBlock" data-arg="H4" class="editor-btn p-1 text-slate-700 font-bold hover:bg-slate-200 rounded text-xs">T2</button>
+                            </div>
+                            <div class="flex items-center gap-1 ml-0.5">
+                                <select data-cmd="fontSize" class="editor-select text-xs font-medium border border-slate-300 rounded h-6 px-1 bg-white cursor-pointer">
+                                    <option value="3">Normale</option><option value="1">Très petite</option><option value="2">Petite</option><option value="4">Moyenne</option><option value="5">Grande</option><option value="6">Très grande</option><option value="7">Énorme</option>
+                                </select>
+                                <div class="flex items-center gap-1 border border-slate-300 rounded h-6 w-6 overflow-hidden">
+                                    <input type="color" data-cmd="foreColor" class="editor-color w-8 h-8 -m-1 cursor-pointer" value="#0f172a">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-0.5 flex-nowrap border-l border-slate-300 pl-1 ml-0.5">
+                                <button type="button" data-cmd="bold" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 12a4 4 0 0 0 0-8H6v8"></path><path d="M15 20a4 4 0 0 0 0-8H6v8Z"></path></svg></button>
+                                <button type="button" data-cmd="italic" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" x2="10" y1="4" y2="4"></line><line x1="14" x2="5" y1="20" y2="20"></line><line x1="15" x2="9" y1="4" y2="20"></line></svg></button>
+                                <button type="button" data-cmd="underline" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4v6a6 6 0 0 0 12 0V4"></path><line x1="4" x2="20" y1="20" y2="20"></line></svg></button>
+                                <button type="button" data-cmd="strikeThrough" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4H9a3 3 0 0 0-2.83 4"></path><path d="M14 12a4 4 0 0 1 0 8H6"></path><line x1="4" x2="20" y1="12" y2="12"></line></svg></button>
+                            </div>
+                            <div class="flex items-center gap-0.5 flex-nowrap border-l border-slate-300 pl-1 ml-0.5">
+                                <button type="button" data-cmd="insertUnorderedList" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" x2="21" y1="6" y2="6"></line><line x1="8" x2="21" y1="12" y2="12"></line><line x1="8" x2="21" y1="18" y2="18"></line><line x1="3" x2="3.01" y1="6" y2="6"></line><line x1="3" x2="3.01" y1="12" y2="12"></line><line x1="3" x2="3.01" y1="18" y2="18"></line></svg></button>
+                                <button type="button" data-cmd="insertOrderedList" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="10" x2="21" y1="6" y2="6"></line><line x1="10" x2="21" y1="12" y2="12"></line><line x1="10" x2="21" y1="18" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg></button>
+                                <button type="button" data-cmd="justifyLeft" class="editor-btn p-1 text-slate-700 hover:bg-slate-200 rounded"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="21" x2="3" y1="6" y2="6"></line><line x1="15" x2="3" y1="12" y2="12"></line><line x1="17" x2="3" y1="18" y2="18"></line></svg></button>
+                            </div>
+                            <button type="button" id="btnMic" class="ml-auto flex items-center gap-1 p-1 px-2.5 border rounded-full transition-all text-[11px] font-bold shadow-sm text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-70">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
+                                <span id="micStatusText" class="hidden sm:inline">Micro non supporté</span>
+                            </button>
+                        </div>
+                        <div id="editor" contenteditable="true" class="editor-content flex-1 p-3 sm:p-4 bg-white text-sm leading-relaxed overflow-y-auto prose prose-sm max-w-none" placeholder="Saisissez ou dictez vos idées lumineuses ici... 💡"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-3 border-t border-slate-200 bg-slate-50/50 shrink-0 flex gap-2">
+                <button id="btnCancelEdit" class="hidden px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-all shadow-sm">
+                    ❌ Annuler
+                </button>
+                <button id="btnSaveNote" class="flex-1 w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 transform hover:-translate-y-0.5">
+                    <svg id="saveBtnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    <span id="saveBtnText">Archiver la note 🚀</span>
+                </button>
+            </div>
+        </section>
+
+        <section class="w-full lg:w-7/12 flex flex-col bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-slate-200 overflow-hidden flex-1 lg:flex-none">
+            <div class="py-2 px-4 border-b border-slate-200 bg-slate-50/50 shrink-0 z-10 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-2.5">
+                    <span class="text-xl">🗂️</span>
+                    Archives & Recherche
+                </h2>
+                <!-- NOUVELLE GRILLE 4 COLONNES (Année, Statut, Priorité, Recherche Nom) -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="col-span-1">
+                        <select id="filterYear" class="w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white shadow-sm"></select>
+                    </div>
+                    <div class="col-span-1">
+                        <select id="filterStatus" class="w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white shadow-sm">
+                            <option value="">Tous les statuts</option>
+                            <option value="en_cours">En cours</option>
+                            <option value="rappel">À rappeler</option>
+                            <option value="cloture">Clôturé</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1">
+                        <select id="filterPriority" class="w-full border border-slate-300 rounded-md p-2.5 text-sm bg-white shadow-sm">
+                            <option value="">Toutes priorités</option>
+                            <option value="court">🔴 Courte (Urg.)</option>
+                            <option value="moyen">🟠 Moyenne</option>
+                            <option value="long">🟢 Longue</option>
+                            <option value="aucune">⚪ Normale</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 relative">
+                        <input type="text" id="searchPerson" placeholder="Nom..." class="w-full border border-slate-300 rounded-md p-2.5 pl-9 text-sm bg-white shadow-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-3 text-slate-400"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    </div>
+                    <div class="col-span-1 sm:col-span-4 relative">
+                        <input type="text" id="searchContent" placeholder="Recherche par mot-clé à l'intérieur des notes... 🔍" class="w-full border border-brand-200 rounded-md p-2.5 pl-9 text-sm bg-brand-50/30 shadow-sm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-3 top-3 text-brand-400"><path d="M2 12h4l2-9 5 18 2-9h5"></path></svg>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1 bg-slate-50/30 relative" id="notesListContainer"></div>
+            
+            <div class="p-3 border-t border-slate-200 bg-white/50 text-xs text-slate-600 flex justify-between items-center shrink-0 font-medium">
+                <span id="notesCount" class="bg-slate-100 px-2 py-1 rounded">0 note(s) affichée(s)</span>
+                <div class="flex items-center gap-3">
+                    <button id="btnExportWordList" class="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2.5 py-1.5 rounded transition-colors flex items-center gap-1.5 border border-indigo-200 shadow-sm" style="display: none;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M2 15h10"></path><path d="m9 18 3-3-3-3"></path></svg>
+                        <span id="exportWordText" class="hidden sm:inline">Imprimer (Word)</span>
+                    </button>
+                    <button id="btnClearFilters" class="text-brand-600 hover:text-brand-800 hover:underline px-2 py-1 transition-colors">Réinitialiser les filtres</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white/80 backdrop-blur-md border-t border-slate-200 py-2 px-4 text-center text-[10px] sm:text-xs text-slate-500 shrink-0 z-10">
+        LOGI-NOTES a été conçu avec passion ❤️ par Yannis CHRISTON | 2026. Les données sont exécutées sur le navigateur en local 🔒. Le logiciel respecte la RGPD et a été développé grâce à l'IA générative 🤖.
+    </footer>
+
+    <!-- Modale Paramètres -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full h-[90vh] max-h-[700px] flex flex-col transform transition-all border border-slate-200">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl shrink-0">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Paramètres & Personnalisation
+                </h3>
+                <button id="btnCancelSettings" class="text-slate-400 hover:text-slate-700 p-1 bg-white rounded-md border border-slate-200">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Bloc EPLE -->
+                <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
+                    <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <span class="text-lg">🏫</span> Informations de l'Établissement
+                    </h4>
+                    <p class="text-xs text-slate-500 mb-4">Ces informations apparaîtront en en-tête de vos impressions Word.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Nom de l'établissement (EPLE)</label>
+                            <input type="text" id="settingsEpleName" placeholder="Ex: Collège Jean Moulin" class="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Logo officiel (Image)</label>
+                            <input type="file" id="settingsEpleLogo" accept="image/png, image/jpeg" class="w-full text-xs border border-slate-300 rounded p-1 bg-white file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 cursor-pointer">
+                            <div class="mt-2 text-center border border-dashed border-slate-300 rounded p-2 bg-white min-h-[80px] flex items-center justify-center relative">
+                                <img id="settingsLogoPreview" class="max-h-16 object-contain hidden" />
+                                <span id="settingsLogoPlaceholder" class="text-xs text-slate-400">Aucun logo chargé</span>
+                                <button type="button" id="btnRemoveLogo" class="hidden absolute top-1 right-1 text-red-500 bg-red-50 hover:bg-red-100 p-1 rounded text-xs font-bold">✖</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloc Motifs -->
+                <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
+                    <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm">
+                        <span class="text-lg">🏷️</span> Liste des Motifs (Personnalisation)
+                    </h4>
+                    <p class="text-[11px] text-slate-600 mb-3 leading-relaxed">
+                        Éditez la liste ci-dessous pour modifier le menu déroulant.<br>
+                        • Mettez une <b>[Catégorie]</b> entre crochets.<br>
+                        • Mettez un <b>motif</b> normal sur une ligne.<br>
+                        • Laissez une ligne vide pour espacer.
+                    </p>
+                    <textarea id="settingsMotifsText" class="w-full h-[250px] border border-slate-300 rounded p-2 text-xs font-mono bg-white focus:ring-2 focus:ring-brand-500 leading-relaxed whitespace-pre" spellcheck="false"></textarea>
+                    <button type="button" id="btnResetMotifs" class="mt-2 text-[10px] text-brand-600 hover:underline">Rétablir les motifs par défaut</button>
+                </div>
+                
+                <!-- Bloc Raccourcis de saisie -->
+                <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50 md:col-span-2">
+                    <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm">
+                        <span class="text-lg">⚡</span> Raccourcis de saisie (Cases à cocher)
+                    </h4>
+                    <p class="text-[11px] text-slate-600 mb-3 leading-relaxed">
+                        Ajoutez vos propres cases à cocher au-dessus de la zone de texte. En cliquant dessus, le texte s'insérera dans votre note.<br>
+                        • Mettez <b>un raccourci</b> par ligne.
+                    </p>
+                    <textarea id="settingsShortcutsText" class="w-full h-[100px] border border-slate-300 rounded p-2 text-xs font-mono bg-white focus:ring-2 focus:ring-brand-500 leading-relaxed whitespace-pre" spellcheck="false"></textarea>
+                </div>
+
+            </div>
+
+            <div class="p-4 border-t border-slate-200 bg-slate-50 shrink-0 flex justify-end gap-3 rounded-b-xl">
+                <button id="btnSaveSettings" class="px-5 py-2 text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm flex items-center gap-2 transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Enregistrer les paramètres
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Export -->
+    <div id="exportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-5 transform transition-all border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-1.5 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-600"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                Exporter les événements & notes
+            </h3>
+            <p class="text-xs text-slate-500 mb-4">Choisissez le format de sortie et le périmètre d'exportation :</p>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Format de fichier</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-brand-50 hover:border-brand-300 transition-all has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/70 has-[:checked]:ring-1 has-[:checked]:ring-brand-500">
+                        <input type="radio" name="exportFormat" value="json" class="sr-only" checked>
+                        <span class="text-base">📦</span>
+                        <span class="text-xs font-bold text-slate-800">JSON</span>
+                        <span class="text-[10px] text-slate-500">Sauvegarde complète</span>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-amber-50 hover:border-amber-300 transition-all has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/70 has-[:checked]:ring-1 has-[:checked]:ring-amber-500">
+                        <input type="radio" name="exportFormat" value="ics" class="sr-only">
+                        <span class="text-base">📅</span>
+                        <span class="text-xs font-bold text-slate-800">iCalendar</span>
+                        <span class="text-[10px] text-slate-500">Outlook / Apple</span>
+                    </label>
+                    <label class="cursor-pointer border border-slate-200 rounded-lg p-2.5 flex flex-col items-center gap-1 text-center hover:bg-emerald-50 hover:border-emerald-300 transition-all has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/70 has-[:checked]:ring-1 has-[:checked]:ring-emerald-500">
+                        <input type="radio" name="exportFormat" value="csv" class="sr-only">
+                        <span class="text-base">📊</span>
+                        <span class="text-xs font-bold text-slate-800">Tableur CSV</span>
+                        <span class="text-[10px] text-slate-500">Excel / LibreOffice</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Périmètre</label>
+                <div class="flex gap-4 text-xs text-slate-700">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="exportScope" value="all" checked class="text-brand-600 focus:ring-brand-500">
+                        <span>Toutes les notes (<span id="exportAllCount">0</span>)</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="radio" name="exportScope" value="filtered" class="text-brand-600 focus:ring-brand-500">
+                        <span>Notes filtrées (<span id="exportFilteredCount">0</span>)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label for="exportFilenameInput" class="block text-xs font-semibold text-slate-700 mb-1">Nom du fichier</label>
+                <div class="relative">
+                    <input type="text" id="exportFilenameInput" class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-slate-50 pr-14 font-mono text-xs">
+                    <span id="exportExtensionLabel" class="absolute right-3 top-2.5 text-xs text-slate-500 font-semibold pointer-events-none">.json</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button id="btnCancelExport" class="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Annuler</button>
+                <button id="btnConfirmExport" class="px-4 py-2 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg shadow-sm flex items-center gap-1.5">Télécharger</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Calendrier -->
+    <div id="calendarModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex-col items-center justify-center p-2 sm:p-4 opacity-0 transition-opacity duration-300">
+        <div id="calendarModalContent" class="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] max-h-[800px] flex flex-col md:flex-row overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-200">
+            <div class="flex-1 flex flex-col h-full overflow-hidden">
+                <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">📅 Calendrier Annuel</h2>
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <div class="flex items-center bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                            <button id="btnPrevMonth" class="p-2 hover:bg-slate-100 text-slate-600 transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+                            <span id="calendarMonthYear" class="px-3 sm:px-6 py-2 text-sm font-bold text-slate-800 min-w-[120px] text-center capitalize"></span>
+                            <button id="btnNextMonth" class="p-2 hover:bg-slate-100 text-slate-600 transition-colors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                        </div>
+                        <button id="btnCloseCalendar" class="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors md:hidden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-px bg-slate-200 border-b border-slate-200 shrink-0">
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">LUN</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">MAR</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">MER</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">JEU</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">VEN</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">SAM</div>
+                    <div class="bg-slate-50 py-2 text-center text-[10px] sm:text-xs font-bold text-slate-500">DIM</div>
+                </div>
+                <div id="calendarGrid" class="flex-1 grid grid-cols-7 auto-rows-[minmax(60px,1fr)] gap-px bg-slate-200 p-px overflow-y-auto"></div>
+                <div class="p-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center shrink-0">
+                    <div class="flex gap-4">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-100 border border-blue-300"></span> Entretiens</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-100 border border-amber-300"></span> Rappels</span>
+                    </div>
+                    <button id="btnCalendarExportIcs" class="hidden sm:flex text-brand-600 hover:text-brand-800 font-semibold items-center gap-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exporter (.ics)</button>
+                </div>
+            </div>
+            <div id="calendarSidebar" class="w-full md:w-80 border-t md:border-t-0 md:border-l border-slate-200 bg-slate-50 hidden flex-col h-1/3 md:h-full shrink-0">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
+                    <h3 id="selectedDayTitle" class="font-bold text-slate-800 capitalize">Sélectionnez un jour</h3>
+                    <button id="btnCloseSidebar" class="text-slate-400 hover:text-slate-600 p-1 md:hidden"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                </div>
+                <div id="selectedDayEvents" class="p-4 flex-1 overflow-y-auto flex flex-col gap-3"></div>
+            </div>
+            <button id="btnCloseCalendarDesktop" class="hidden md:flex absolute top-4 right-4 p-2 bg-white/80 backdrop-blur rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 shadow-sm transition-all z-10" onclick="document.getElementById('btnCloseCalendar').click()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+    </div>
+
+    <!-- Modales Suppression -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Supprimer la note ?</h3>
+            <p class="text-sm text-slate-500 mb-5">Action irréversible.</p>
+            <div class="flex justify-center gap-3">
+                <button id="btnCancelDelete" class="px-4 py-2 text-sm font-semibold bg-slate-100 rounded-lg">Annuler</button>
+                <button id="btnConfirmDelete" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg">Supprimer</button>
+            </div>
+        </div>
+    </div>
+    <div id="deleteAllModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 text-center">
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Tout supprimer ?</h3>
+            <p class="text-sm text-slate-500 mb-5">Toutes vos notes seront définitivement effacées du navigateur.</p>
+            <div class="flex justify-center gap-3">
+                <button id="btnCancelDeleteAll" class="px-4 py-2 text-sm font-semibold bg-slate-100 rounded-lg">Annuler</button>
+                <button id="btnConfirmDeleteAll" class="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg">Oui, tout effacer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur Notifications -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        const LOCAL_STORAGE_KEY = 'logiNote_data_v2';
+        const DRAFT_KEY = 'logiNote_draft_v2';
+        const SETTINGS_KEY = 'logiNote_settings_v2';
+
+        let notes = [];
+        let currentFilteredNotes = [];
+        let editingNoteId = null;
+        
+        const defaultMotifsList = `[Suivi Scolaire et Pédagogique]
+Chute des résultats ou désinvestissement
+Valorisation et excellence
+Evaluations Nationales
+Orientation
+Examens
+EDT
+
+[Educatif]
+CESCE
+Parcours citoyen
+Parcours de santé
+Parcours avenir
+Parcours éducatif et culturel
+
+[EBEP]
+PAP
+PPS
+PRE
+PAI
+GEVASCO
+NOTIFICATION MDPH
+
+[Vie Scolaire]
+Défaut d'assiduité
+Retard
+Manquements au règlement intérieur
+Atteintes aux personnes ou aux biens
+
+[Climat Scolaire et Sécurité]
+Prévention et gestion du harcèlement
+Régulation de conflits
+Usage inapproprié des réseaux sociaux
+Téléphone
+
+[Procédures Disciplinaires et Éducatives]
+Commission Éducative
+Mesure conservatoire
+Sanction
+
+[Accompagnement Social, Médical]
+Mal-être et détresse
+Difficultés matérielles ou familiales
+Information préoccupante
+Santé
+PAI
+
+[Engagement et Citoyenneté]
+Exercice d'un mandat
+Portage d'initiatives
+
+[Autres]
+Autre`;
+
+        const defaultShortcutsList = `🎯 Objectif(s) fixé(s)\n✅ Décision(s) prise(s)`;
+
+        let appSettings = {
+            epleName: "",
+            epleLogo: null,
+            motifsText: defaultMotifsList,
+            shortcutsText: defaultShortcutsList
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // DOM Elements
+        const elDate = document.getElementById('dateInput');
+        const elTime = document.getElementById('timeInput');
+        const elYear = document.getElementById('yearInput');
+        const elName = document.getElementById('nameInput');
+        const elRole = document.getElementById('roleInput');
+        const elTeacherSubjectContainer = document.getElementById('teacherSubjectContainer');
+        const elTeacherSubject = document.getElementById('teacherSubjectInput');
+        const elParentStudentNameContainer = document.getElementById('parentStudentNameContainer');
+        const elParentStudentName = document.getElementById('parentStudentNameInput');
+        const elStudentClassContainer = document.getElementById('studentClassContainer');
+        const elStudentClass = document.getElementById('studentClassInput');
+        const elOtherRoleContainer = document.getElementById('otherRoleContainer');
+        const elOtherRole = document.getElementById('otherRoleInput');
+        const elMotif = document.getElementById('motifInput');
+        const elOtherMotifContainer = document.getElementById('otherMotifContainer');
+        const elOtherMotif = document.getElementById('otherMotifInput');
+        const elStatus = document.getElementById('statusInput');
+        const elReminderContainer = document.getElementById('reminderContainer');
+        const elReminderDate = document.getElementById('reminderDateInput');
+        const elPriority = document.getElementById('priorityInput');
+        
+        const elUrl = document.getElementById('urlInput');
+        const elFile = document.getElementById('fileInput');
+        const elAttachmentPreview = document.getElementById('attachmentPreview');
+        const elAttachmentNameDisplay = document.getElementById('attachmentNameDisplay');
+        const btnRemoveAttachment = document.getElementById('btnRemoveAttachment');
+        let currentAttachmentData = null;
+        let currentAttachmentName = null;
+
+        const dynamicShortcutsContainer = document.getElementById('dynamicShortcutsContainer');
+
+        const formTitle = document.getElementById('formTitle');
+        const elEditor = document.getElementById('editor');
+        const draftStatus = document.getElementById('draftStatus');
+        const btnSaveNote = document.getElementById('btnSaveNote');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnIcon = document.getElementById('saveBtnIcon');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+
+        const elFilterYear = document.getElementById('filterYear');
+        const elFilterStatus = document.getElementById('filterStatus');
+        const elFilterPriority = document.getElementById('filterPriority');
+        const elSearchPerson = document.getElementById('searchPerson');
+        const elSearchContent = document.getElementById('searchContent');
+        const elNotesList = document.getElementById('notesListContainer');
+        const elNotesCount = document.getElementById('notesCount');
+        const btnClearFilters = document.getElementById('btnClearFilters');
+
+        const reminderDropdown = document.getElementById('reminderDropdown');
+        const reminderBadge = document.getElementById('reminderBadge');
+        const reminderList = document.getElementById('reminderList');
+        const reminderCountText = document.getElementById('reminderCountText');
+
+        // Settings Modal Elements
+        const settingsModal = document.getElementById('settingsModal');
+        const btnSettings = document.getElementById('btnSettings');
+        const btnCancelSettings = document.getElementById('btnCancelSettings');
+        const btnSaveSettings = document.getElementById('btnSaveSettings');
+        const settingsEpleName = document.getElementById('settingsEpleName');
+        const settingsEpleLogo = document.getElementById('settingsEpleLogo');
+        const settingsLogoPreview = document.getElementById('settingsLogoPreview');
+        const settingsLogoPlaceholder = document.getElementById('settingsLogoPlaceholder');
+        const btnRemoveLogo = document.getElementById('btnRemoveLogo');
+        const settingsMotifsText = document.getElementById('settingsMotifsText');
+        const btnResetMotifs = document.getElementById('btnResetMotifs');
+        const settingsShortcutsText = document.getElementById('settingsShortcutsText');
+        
+        const mainLogoContainer = document.getElementById('mainLogoContainer');
+        const defaultLogoSvg = document.getElementById('defaultLogoSvg');
+        const customEpleLogo = document.getElementById('customEpleLogo');
+
+        let tempLogoData = null;
+
+        const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2);
+        
+        const getLocalDateString = (dateObj = new Date()) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const getExportFilenameDateStr = () => {
+            const dateObj = new Date();
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const year = dateObj.getFullYear();
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            return `${day}${month}${year}_${hours}h${minutes}`;
+        };
+
+        const parseLocalDate = (dateStr) => {
+            if (!dateStr) return new Date();
+            const [year, month, day] = dateStr.split('-');
+            return new Date(year, month - 1, day);
+        };
+
+        const calculateSchoolYear = (dateStr) => {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            if (month >= 8) return `${year}-${year + 1}`;
+            return `${year - 1}-${year}`;
+        };
+
+        const showToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : (type === 'error' ? 'bg-red-600' : 'bg-brand-600');
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-xl transform transition-all duration-300 translate-y-full opacity-0 flex items-center gap-3 text-sm font-medium max-w-sm pointer-events-auto`;
+            toast.innerHTML = `<span>${message}</span>`;
+            document.getElementById('toastContainer').appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+
+        const loadSettings = () => {
+            try {
+                const stored = localStorage.getItem(SETTINGS_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    appSettings = { ...appSettings, ...parsed };
+                }
+            } catch (e) { console.error("Erreur lecture settings", e); }
+            
+            buildMotifsDropdown(appSettings.motifsText);
+            buildShortcuts(appSettings.shortcutsText || defaultShortcutsList);
+            applyHeaderLogo();
+        };
+
+        const saveSettings = () => {
+            appSettings.epleName = settingsEpleName.value.trim();
+            appSettings.epleLogo = tempLogoData;
+            appSettings.motifsText = settingsMotifsText.value;
+            appSettings.shortcutsText = settingsShortcutsText.value;
+            
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+            buildMotifsDropdown(appSettings.motifsText);
+            buildShortcuts(appSettings.shortcutsText);
+            applyHeaderLogo();
+            
+            settingsModal.classList.add('hidden');
+            showToast("Paramètres enregistrés avec succès !");
+        };
+
+        const applyHeaderLogo = () => {
+            if (appSettings.epleLogo) {
+                customEpleLogo.src = appSettings.epleLogo;
+                customEpleLogo.classList.remove('hidden');
+                defaultLogoSvg.classList.add('hidden');
+                mainLogoContainer.classList.remove('from-brand-600', 'to-brand-500', 'text-white', 'p-2');
+                mainLogoContainer.classList.add('bg-white', 'p-1', 'border', 'border-slate-200');
+            } else {
+                customEpleLogo.src = '';
+                customEpleLogo.classList.add('hidden');
+                defaultLogoSvg.classList.remove('hidden');
+                mainLogoContainer.classList.add('from-brand-600', 'to-brand-500', 'text-white', 'p-2');
+                mainLogoContainer.classList.remove('bg-white', 'p-1', 'border', 'border-slate-200');
+            }
+        };
+
+        const buildShortcuts = (textBlock) => {
+            dynamicShortcutsContainer.innerHTML = '';
+            const lines = textBlock.split('\n').map(l => l.trim()).filter(l => l);
+            lines.forEach(line => {
+                const label = document.createElement('label');
+                label.className = "flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer hover:text-brand-600 transition-colors";
+                label.innerHTML = `<input type="checkbox" class="w-3.5 h-3.5 rounded text-brand-600 focus:ring-brand-500 cursor-pointer border-slate-300 shortcut-checkbox" data-text="${line.replace(/"/g, '&quot;')}"> ${line}`;
+                dynamicShortcutsContainer.appendChild(label);
+            });
+
+            document.querySelectorAll('.shortcut-checkbox').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        const text = e.target.getAttribute('data-text');
+                        insertTextIntoEditor(`<span style="color:#0f172a; font-weight:normal;">${text} : </span>`);
+                        saveDraft();
+                        setTimeout(() => { e.target.checked = false; }, 300);
+                    }
+                });
+            });
+        };
+
+        const buildMotifsDropdown = (textBlock) => {
+            const lines = textBlock.split('\n');
+            let html = `<option value="">-- Sélectionnez (optionnel) --</option>`;
+            let inOptgroup = false;
+
+            lines.forEach(line => {
+                const t = line.trim();
+                if (!t) return;
+                
+                if (t.startsWith('[') && t.endsWith(']')) {
+                    if (inOptgroup) html += `</optgroup>`;
+                    const catName = t.substring(1, t.length - 1);
+                    html += `<optgroup label="${catName}">`;
+                    inOptgroup = true;
+                } else {
+                    html += `<option value="${t}">${t}</option>`;
+                }
+            });
+            if (inOptgroup) html += `</optgroup>`;
+            
+            const oldVal = elMotif.value;
+            elMotif.innerHTML = html;
+            
+            let found = false;
+            Array.from(elMotif.options).forEach(opt => { if(opt.value === oldVal) found = true; });
+            if (found) elMotif.value = oldVal;
+            else if (oldVal && oldVal !== 'Autre') {
+                elMotif.value = 'Autre';
+                elOtherMotifContainer.classList.remove('hidden');
+                elOtherMotif.value = oldVal;
+            }
+        };
+
+        btnSettings.addEventListener('click', () => {
+            settingsEpleName.value = appSettings.epleName || '';
+            settingsMotifsText.value = appSettings.motifsText || defaultMotifsList;
+            settingsShortcutsText.value = appSettings.shortcutsText || defaultShortcutsList;
+            
+            tempLogoData = appSettings.epleLogo;
+            updateSettingsLogoPreview();
+
+            settingsModal.classList.remove('hidden');
+        });
+
+        btnCancelSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        btnSaveSettings.addEventListener('click', saveSettings);
+        
+        btnResetMotifs.addEventListener('click', () => {
+            if(confirm("Rétablir les motifs par défaut ? Vos modifications seront effacées.")) {
+                settingsMotifsText.value = defaultMotifsList;
+            }
+        });
+
+        settingsEpleLogo.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                tempLogoData = ev.target.result;
+                updateSettingsLogoPreview();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnRemoveLogo.addEventListener('click', () => {
+            tempLogoData = null;
+            settingsEpleLogo.value = '';
+            updateSettingsLogoPreview();
+        });
+
+        const updateSettingsLogoPreview = () => {
+            if (tempLogoData) {
+                settingsLogoPreview.src = tempLogoData;
+                settingsLogoPreview.classList.remove('hidden');
+                settingsLogoPlaceholder.classList.add('hidden');
+                btnRemoveLogo.classList.remove('hidden');
+            } else {
+                settingsLogoPreview.src = '';
+                settingsLogoPreview.classList.add('hidden');
+                settingsLogoPlaceholder.classList.remove('hidden');
+                btnRemoveLogo.classList.add('hidden');
+            }
+        };
+
+        let autosaveTimeout = null;
+        const saveDraft = () => {
+            const draft = {
+                date: elDate.value, time: elTime.value, year: elYear.value,
+                name: elName.value, role: elRole.value,
+                teacherSubject: elTeacherSubject.value, studentClass: elStudentClass.value,
+                parentStudentName: elParentStudentName.value, otherRole: elOtherRole.value,
+                motif: elMotif.value, otherMotif: elOtherMotif.value,
+                status: elStatus.value, reminderDate: elReminderDate.value, priority: elPriority.value,
+                url: elUrl.value, attachmentData: currentAttachmentData, attachmentName: currentAttachmentName,
+                content: elEditor.innerHTML
+            };
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            
+            draftStatus.textContent = "Brouillon sauvegardé";
+            draftStatus.classList.remove('opacity-0');
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(() => draftStatus.classList.add('opacity-0'), 2500);
+        };
+
+        const loadDraft = () => {
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+                if (draft) {
+                    if (draft.date) elDate.value = draft.date;
+                    if (draft.time !== undefined) elTime.value = draft.time;
+                    if (draft.year) elYear.value = draft.year;
+                    if (draft.name) elName.value = draft.name;
+                    if (draft.role) { elRole.value = draft.role; toggleRoleSpecificFields(); }
+                    if (draft.teacherSubject) elTeacherSubject.value = draft.teacherSubject;
+                    if (draft.studentClass) elStudentClass.value = draft.studentClass;
+                    if (draft.parentStudentName) elParentStudentName.value = draft.parentStudentName;
+                    if (draft.otherRole) elOtherRole.value = draft.otherRole;
+                    if (draft.motif) { elMotif.value = draft.motif; toggleOtherMotif(); }
+                    if (draft.otherMotif) elOtherMotif.value = draft.otherMotif;
+                    if (draft.status) { elStatus.value = draft.status; toggleReminder(); }
+                    if (draft.reminderDate) elReminderDate.value = draft.reminderDate;
+                    if (draft.priority) elPriority.value = draft.priority;
+                    if (draft.url) elUrl.value = draft.url;
+                    if (draft.attachmentData) {
+                        currentAttachmentData = draft.attachmentData;
+                        currentAttachmentName = draft.attachmentName;
+                        updateAttachmentUI();
+                    }
+                    if (draft.content) elEditor.innerHTML = draft.content;
+                } else initDefaultValues();
+            } catch (e) { initDefaultValues(); }
+        };
+
+        const initDefaultValues = () => {
+            const today = getLocalDateString();
+            elDate.value = today;
+            elTime.value = '';
+            elYear.value = calculateSchoolYear(today);
+        };
+
+        const clearDraft = () => {
+            localStorage.removeItem(DRAFT_KEY);
+            elName.value = ''; elRole.value = 'Professeur';
+            elTeacherSubject.value = ''; elStudentClass.value = '';
+            elParentStudentName.value = ''; elOtherRole.value = '';
+            elMotif.value = ''; elOtherMotif.value = '';
+            elStatus.value = 'en_cours'; elReminderDate.value = '';
+            elPriority.value = 'aucune'; elUrl.value = '';
+            
+            currentAttachmentData = null; currentAttachmentName = null;
+            updateAttachmentUI(); elEditor.innerHTML = '';
+            toggleRoleSpecificFields(); toggleOtherMotif(); toggleReminder();
+            initDefaultValues();
+        };
+
+        [elDate, elTime, elYear, elName, elRole, elOtherRole, elTeacherSubject, elStudentClass, elParentStudentName, elStatus, elReminderDate, elPriority, elUrl, elMotif, elOtherMotif].forEach(el => {
+            if (el) { el.addEventListener('input', saveDraft); el.addEventListener('change', saveDraft); }
+        });
+        elEditor.addEventListener('input', saveDraft);
+
+        const insertTextIntoEditor = (htmlText) => {
+            elEditor.focus();
+            if (elEditor.innerHTML.trim() === '' || elEditor.innerHTML === '<br>') {
+                elEditor.innerHTML = htmlText + '&nbsp;';
+            } else {
+                elEditor.innerHTML += '<br><br>' + htmlText + '&nbsp;';
+            }
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(elEditor);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            saveDraft();
+        };
+
+        elFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 1.5 * 1024 * 1024) { showToast('Fichier trop lourd (1.5 Mo max)', 'error'); elFile.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentAttachmentData = event.target.result;
+                currentAttachmentName = file.name;
+                updateAttachmentUI(); saveDraft();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnRemoveAttachment.addEventListener('click', () => {
+            currentAttachmentData = null; currentAttachmentName = null;
+            elFile.value = ''; updateAttachmentUI(); saveDraft();
+        });
+
+        const updateAttachmentUI = () => {
+            if (currentAttachmentData) {
+                elFile.classList.add('hidden');
+                elAttachmentPreview.classList.remove('hidden'); elAttachmentPreview.classList.add('flex');
+                elAttachmentNameDisplay.textContent = currentAttachmentName;
+            } else {
+                elFile.classList.remove('hidden');
+                elAttachmentPreview.classList.add('hidden'); elAttachmentPreview.classList.remove('flex');
+                elFile.value = '';
+            }
+        };
+
+        const toggleRoleSpecificFields = () => {
+            elOtherRoleContainer.classList.add('hidden'); elTeacherSubjectContainer.classList.add('hidden');
+            elStudentClassContainer.classList.add('hidden'); elParentStudentNameContainer.classList.add('hidden');
+            if (elRole.value === 'Autre') elOtherRoleContainer.classList.remove('hidden'); else elOtherRole.value = ''; 
+            if (elRole.value === 'Professeur') elTeacherSubjectContainer.classList.remove('hidden'); else elTeacherSubject.value = '';
+            if (elRole.value === 'Élève' || elRole.value === 'Parent') elStudentClassContainer.classList.remove('hidden'); else elStudentClass.value = '';
+            if (elRole.value === 'Parent') elParentStudentNameContainer.classList.remove('hidden'); else elParentStudentName.value = '';
+        };
+        elRole.addEventListener('change', toggleRoleSpecificFields);
+
+        const toggleOtherMotif = () => {
+            if (elMotif.value === 'Autre') elOtherMotifContainer.classList.remove('hidden');
+            else { elOtherMotifContainer.classList.add('hidden'); elOtherMotif.value = ''; }
+        };
+        if(elMotif) elMotif.addEventListener('change', toggleOtherMotif);
+
+        const toggleReminder = () => {
+            if (elStatus.value === 'rappel') elReminderContainer.classList.remove('hidden');
+            else { elReminderContainer.classList.add('hidden'); elReminderDate.value = ''; }
+        };
+        elStatus.addEventListener('change', toggleReminder);
+
+        elDate.addEventListener('change', (e) => { elYear.value = calculateSchoolYear(e.target.value); saveDraft(); });
+
+        document.querySelectorAll('.editor-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.execCommand(btn.getAttribute('data-cmd'), false, btn.getAttribute('data-arg') || null);
+                elEditor.focus(); saveDraft();
+            });
+        });
+
+        document.querySelectorAll('.editor-select').forEach(sel => {
+            sel.addEventListener('change', () => { document.execCommand(sel.getAttribute('data-cmd'), false, sel.value); elEditor.focus(); saveDraft(); });
+        });
+
+        document.querySelectorAll('.editor-color').forEach(inp => {
+            inp.addEventListener('input', () => { document.execCommand(inp.getAttribute('data-cmd'), false, inp.value); elEditor.focus(); saveDraft(); });
+        });
+
+        elEditor.addEventListener("paste", function(e) {
+            e.preventDefault();
+            const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+
+        const resetEditMode = () => {
+            editingNoteId = null;
+            formTitle.innerHTML = `<span class="text-xl">📝</span> <span class="scintille-doux">Nouvelle Note</span>`;
+            saveBtnText.textContent = "Archiver la note 🚀";
+            btnSaveNote.classList.remove('from-amber-500', 'to-amber-400');
+            btnSaveNote.classList.add('from-brand-600', 'to-brand-500');
+            btnCancelEdit.classList.add('hidden');
+        };
+
+        btnCancelEdit.addEventListener('click', () => { resetEditMode(); clearDraft(); showToast('Annulé.', 'brand'); });
+
+        btnSaveNote.addEventListener('click', () => {
+            if (!elDate.value || !elYear.value || !elName.value.trim()) { showToast('Veuillez remplir Date, Année et Nom.', 'error'); return; }
+            if (elEditor.innerHTML.trim() === '' || elEditor.innerHTML === '<br>') { showToast('Contenu vide.', 'error'); return; }
+
+            const noteData = {
+                date: elDate.value, time: elTime.value, year: elYear.value,
+                name: elName.value.trim(), role: elRole.value,
+                teacherSubject: elRole.value === 'Professeur' ? elTeacherSubject.value.trim() : null,
+                studentClass: (elRole.value === 'Élève' || elRole.value === 'Parent') ? elStudentClass.value.trim() : null,
+                parentStudentName: elRole.value === 'Parent' ? elParentStudentName.value.trim() : null,
+                customRole: elRole.value === 'Autre' ? elOtherRole.value.trim() : null,
+                motif: elMotif.value, customMotif: elMotif.value === 'Autre' ? elOtherMotif.value.trim() : null,
+                status: elStatus.value, reminderDate: elStatus.value === 'rappel' ? elReminderDate.value : null,
+                priority: elPriority.value, url: elUrl.value.trim(),
+                attachmentData: currentAttachmentData, attachmentName: currentAttachmentName,
+                content: elEditor.innerHTML
+            };
+
+            if (editingNoteId) {
+                const noteIndex = notes.findIndex(n => n.id === editingNoteId);
+                if (noteIndex > -1) notes[noteIndex] = { ...notes[noteIndex], ...noteData, lastModified: Date.now() };
+                showToast('Note mise à jour !');
+                resetEditMode();
+            } else {
+                notes.unshift({ ...noteData, id: generateId(), timestamp: Date.now() });
+                showToast('Note archivée !');
+            }
+
+            saveNotesToStorage(); clearDraft(); updateDashboard();
+        });
+
+        const saveNotesToStorage = () => {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(notes));
+                populateYearFilter(); updateDatalists(); updateRemindersNotification();
+            } catch (e) { showToast("Erreur sauvegarde (Espace saturé ?)", "error"); }
+        };
+
+        const loadNotes = () => {
+            try {
+                const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (stored) notes = JSON.parse(stored);
+            } catch (e) { notes = []; }
+            populateYearFilter(); updateDatalists(); updateDashboard(); updateRemindersNotification();
+        };
+
+        const updateDatalists = () => {
+            const names = new Set(), subjects = new Set(), classes = new Set(), otherRoles = new Set();
+            notes.forEach(n => {
+                if (n.name) names.add(n.name.trim());
+                if (n.teacherSubject) subjects.add(n.teacherSubject.trim());
+                if (n.studentClass) classes.add(n.studentClass.trim());
+                if (n.parentStudentName) names.add(n.parentStudentName.trim());
+                if (n.customRole) otherRoles.add(n.customRole.trim());
+            });
+            const pop = (id, set) => {
+                const list = document.getElementById(id);
+                if (list) { list.innerHTML = ''; Array.from(set).sort().forEach(v => { if(v) list.innerHTML += `<option value="${v}"></option>`; }); }
+            };
+            pop('namesList', names); pop('subjectsList', subjects); pop('classesList', classes); pop('otherRolesList', otherRoles);
+        };
+
+        const populateYearFilter = () => {
+            const years = [...new Set(notes.map(n => n.year))].sort().reverse();
+            const currentVal = elFilterYear.value;
+            elFilterYear.innerHTML = '<option value="">Toutes les années</option>';
+            years.forEach(y => elFilterYear.innerHTML += `<option value="${y}">${y}</option>`);
+            if (years.includes(currentVal)) elFilterYear.value = currentVal;
+        };
+
+        const stripHtml = (html) => { const tmp = document.createElement("DIV"); tmp.innerHTML = html; return tmp.textContent || tmp.innerText || ""; };
+
+        const updateRemindersNotification = () => {
+            const reminders = notes.filter(n => n.status === 'rappel' && n.reminderDate);
+            reminders.sort((a, b) => parseLocalDate(a.reminderDate) - parseLocalDate(b.reminderDate));
+            const count = reminders.length;
+            
+            if (count > 0) { reminderBadge.textContent = count; reminderBadge.classList.remove('hidden'); reminderBadge.classList.add('flex'); } 
+            else { reminderBadge.classList.add('hidden'); reminderBadge.classList.remove('flex'); }
+            
+            reminderCountText.textContent = count;
+            reminderList.innerHTML = '';
+
+            if (count === 0) {
+                reminderList.innerHTML = `<div class="p-4 text-center text-sm text-slate-500">Aucun rappel.</div>`; return;
+            }
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            reminders.forEach(n => {
+                const remDate = parseLocalDate(n.reminderDate);
+                const dateStr = remDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                let statusClass = remDate < today ? 'bg-red-50' : (remDate.getTime() === today.getTime() ? 'bg-orange-50' : 'bg-amber-50');
+                
+                const item = document.createElement('div');
+                item.className = `p-2.5 rounded-lg border ${statusClass} cursor-pointer shadow-sm`;
+                item.innerHTML = `<div class="font-bold text-sm truncate">${n.name}</div><div class="text-xs mt-1">Rappel: ${dateStr}</div>`;
+                item.addEventListener('click', () => { elSearchPerson.value = n.name; updateDashboard(); reminderDropdown.classList.add('hidden'); });
+                reminderList.appendChild(item);
+            });
+        };
+
+        btnReminders.addEventListener('click', (e) => { e.stopPropagation(); reminderDropdown.classList.toggle('hidden'); });
+        document.addEventListener('click', (e) => { if (!document.getElementById('reminderDropdownContainer').contains(e.target)) reminderDropdown.classList.add('hidden'); });
+
+        let searchTimeout;
+        const updateDashboard = () => {
+            const fYear = elFilterYear.value;
+            const fStatus = elFilterStatus.value;
+            const fPriority = elFilterPriority.value;
+            const fPerson = elSearchPerson.value.toLowerCase().trim();
+            const fContent = elSearchContent.value.toLowerCase().trim();
+            
+            currentFilteredNotes = notes.filter(n => {
+                return (fYear === '' || n.year === fYear) &&
+                       (fStatus === '' || n.status === fStatus) &&
+                       (fPriority === '' || (n.priority || 'aucune') === fPriority) &&
+                       (fPerson === '' || n.name.toLowerCase().includes(fPerson)) &&
+                       (fContent === '' || stripHtml(n.content).toLowerCase().includes(fContent));
+            });
+
+            currentFilteredNotes.sort((a, b) => {
+                if(a.date !== b.date) return parseLocalDate(b.date) - parseLocalDate(a.date);
+                const timeA = a.time || '', timeB = b.time || '';
+                if(timeA !== timeB) { if(!timeA) return -1; if(!timeB) return 1; return timeA.localeCompare(timeB); }
+                return a.timestamp - b.timestamp;
+            });
+
+            renderNotes(currentFilteredNotes, fPerson, fContent);
+            elNotesCount.textContent = `${currentFilteredNotes.length} note(s) affichée(s)`;
+            
+            if (currentFilteredNotes.length === 0) document.getElementById('btnExportWordList').style.display = 'none';
+            else document.getElementById('btnExportWordList').style.display = 'flex';
+        };
+
+        const renderNotes = (notesToRender, highlightPerson = '', highlightContent = '') => {
+            elNotesList.innerHTML = '';
+            if (notesToRender.length === 0) { elNotesList.innerHTML = `<div class="text-center text-slate-400 py-10">Aucun résultat.</div>`; return; }
+
+            const highlightText = (text, query) => {
+                if (!query) return text;
+                return text.replace(new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi'), '<mark class="search-highlight">$1</mark>');
+            };
+
+            notesToRender.forEach(n => {
+                let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
+                else if (n.role === 'Élève' && n.studentClass) displayRole += ` (${n.studentClass})`;
+                else if (n.role === 'Parent' && n.parentStudentName) displayRole += ` (Enfant: ${n.parentStudentName})`;
+                
+                let statusBadge = n.status === 'cloture' ? `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs border whitespace-nowrap">Clôturé</span>` :
+                                  (n.status === 'rappel' ? `<span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs border whitespace-nowrap">Rappel : ${n.reminderDate ? parseLocalDate(n.reminderDate).toLocaleDateString() : '?'}</span>` : 
+                                  `<span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs border whitespace-nowrap">En cours</span>`);
+                
+                let priorityBadge = n.priority === 'court' ? '🔴' : (n.priority === 'moyen' ? '🟠' : (n.priority === 'long' ? '🟢' : ''));
+                let motifDisplay = n.motif === 'Autre' ? (n.customMotif || '') : (n.motif || '');
+                let motifBadge = motifDisplay ? `<span class="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-xs border whitespace-nowrap">${motifDisplay}</span>` : '';
+                
+                const dateStr = parseLocalDate(n.date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const timeStr = n.time ? ` à ${n.time}` : ' (Journée)';
+                
+                const card = document.createElement('article');
+                card.className = "bg-white p-4 sm:p-5 rounded-lg shadow-sm border border-slate-200 mb-4";
+                
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3 pb-3 border-b border-slate-100">
+                        <div class="flex-1 w-full sm:w-auto overflow-hidden">
+                            <h3 class="font-bold text-slate-800 text-lg truncate">${highlightText(n.name, highlightPerson)} ${priorityBadge}</h3>
+                            <div class="flex flex-nowrap overflow-x-auto gap-1.5 mt-2 items-center pb-1" style="scrollbar-width: none; -ms-overflow-style: none;">
+                                ${statusBadge} <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs border whitespace-nowrap">${displayRole}</span> ${motifBadge} <span class="px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-xs border whitespace-nowrap">${n.year}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end shrink-0 ml-auto">
+                            <div class="flex items-center gap-1 mb-1 bg-yellow-300 px-2 py-1 rounded font-semibold text-xs text-yellow-900 shadow-sm border border-yellow-400">
+                                <button class="edit-single-note hover:text-black px-1" data-id="${n.id}" title="Modifier">✏️</button>
+                                <button class="export-single-word hover:text-black px-1" data-id="${n.id}" title="Exporter Word">📄</button>
+                                <button class="delete-single-note hover:text-red-700 px-1" data-id="${n.id}" title="Supprimer">🗑️</button>
+                                <span class="mx-1">|</span>
+                                📅 ${dateStr} <span class="text-[10px] opacity-80 ml-1 uppercase">${timeStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="prose prose-sm max-w-none text-slate-700 bg-slate-50/50 p-3 rounded-md border border-slate-100 note-content-display">
+                        ${n.content}
+                    </div>
+                `;
+                
+                if (highlightContent) {
+                    const contentDiv = card.querySelector('.note-content-display');
+                    const regex = new RegExp(`(${highlightContent.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+                    const treeWalker = document.createTreeWalker(contentDiv, NodeFilter.SHOW_TEXT, null, false);
+                    const nodesToReplace = [];
+                    let currentNode;
+                    while (currentNode = treeWalker.nextNode()) {
+                        regex.lastIndex = 0;
+                        if (regex.test(currentNode.nodeValue)) nodesToReplace.push(currentNode);
+                    }
+                    nodesToReplace.forEach(node => {
+                        const span = document.createElement('span');
+                        span.innerHTML = node.nodeValue.replace(regex, '<mark class="search-highlight">$1</mark>');
+                        node.parentNode.replaceChild(span, node);
+                    });
+                }
+                elNotesList.appendChild(card);
+            });
+        };
+
+        [elFilterYear, elFilterStatus, elFilterPriority, elSearchPerson, elSearchContent].forEach(el => { 
+            if (el) el.addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(updateDashboard, 250); }); 
+        });
+        
+        btnClearFilters.addEventListener('click', () => { 
+            elFilterYear.value = ''; elFilterStatus.value = ''; elFilterPriority.value = ''; elSearchPerson.value = ''; elSearchContent.value = ''; 
+            updateDashboard(); 
+        });
+
+        const exportToWord = (notesToExport, filename = 'LogiNote_Export.doc') => {
+            const sortedNotes = [...notesToExport].sort((a, b) => {
+                const nameA = (a.name || '').toLowerCase(), nameB = (b.name || '').toLowerCase();
+                if (nameA < nameB) return -1; if (nameA > nameB) return 1;
+                if (a.date !== b.date) return parseLocalDate(b.date) - parseLocalDate(a.date);
+                const timeA = a.time || '', timeB = b.time || '';
+                if(timeA !== timeB) { if(!timeA) return -1; if(!timeB) return 1; return timeA.localeCompare(timeB); }
+                return a.timestamp - b.timestamp;
+            });
+
+            let htmlContent = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export LogiNote</title><style>body { font-family: 'Arial', sans-serif; } .person-header { font-size: 16pt; font-weight: bold; color: #0c4a6e; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #0ea5e9; padding-bottom: 5px; } .note-container { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px dashed #cbd5e1; } .meta { font-size: 11pt; background: #f8fafc; padding: 10px; border-left: 4px solid #cbd5e1; margin-bottom:10px; } .badge { font-weight: bold; padding: 3px 6px; border:1px solid #000; font-size: 10pt; } </style></head><body>`;
+
+            if(appSettings.epleName || appSettings.epleLogo) {
+                htmlContent += `
+                <table style="width: 100%; margin-bottom: 20px;">
+                    <tr>`;
+                if(appSettings.epleLogo) {
+                    htmlContent += `<td style="width: 40px; vertical-align: top; padding-right: 10px;"><img src="${appSettings.epleLogo}" style="max-height: 35px;" /></td>`;
+                }
+                if(appSettings.epleName) {
+                    htmlContent += `<td style="vertical-align: middle; text-align: left;"><span style="font-size: 10pt; font-family: Arial, sans-serif; color: #64748b; font-weight: bold; text-transform: uppercase;">${appSettings.epleName}</span></td>`;
+                }
+                htmlContent += `</tr></table>`;
+            }
+
+            let currentPerson = null;
+            sortedNotes.forEach((n) => {
+                let displayRole = n.role === 'Autre' ? (n.customRole || 'Autre') : n.role;
+                if (n.role === 'Professeur' && n.teacherSubject) displayRole += ` (${n.teacherSubject})`;
+                
+                let extras = n.motif ? `<br><strong>Motif :</strong> ${n.motif === 'Autre' ? n.customMotif : n.motif}` : '';
+                
+                const personNameLower = (n.name || '').toLowerCase();
+                if (currentPerson !== personNameLower) { currentPerson = personNameLower; htmlContent += `<div class="person-header">Dossier : ${n.name}</div>`; }
+
+                const dateObj = parseLocalDate(n.date);
+                const dateStr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                htmlContent += `
+                <div class="note-container">
+                    <h3 style="margin-bottom:5px;">Entretien du ${dateStr} ${n.time ? `à ${n.time}` : ''}</h3>
+                    <div class="meta"><strong>Qualité :</strong> ${displayRole} | <strong>Année :</strong> ${n.year} ${extras}</div>
+                    <div style="margin-top: 10px;">
+                        ${n.content}
+                    </div>
+                </div>`;
+            });
+            htmlContent += `</body></html>`;
+
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = filename;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        };
+        
+        document.getElementById('btnExportWordList').addEventListener('click', () => exportToWord(currentFilteredNotes, `LogiNote_${getExportFilenameDateStr()}.doc`));
+
+        elNotesList.addEventListener('click', (e) => {
+            const btnWord = e.target.closest('.export-single-word');
+            if (btnWord) exportToWord([notes.find(n => n.id === btnWord.getAttribute('data-id'))], `LogiNote_${getExportFilenameDateStr()}.doc`);
+
+            const btnEdit = e.target.closest('.edit-single-note');
+            if (btnEdit) {
+                const note = notes.find(n => n.id === btnEdit.getAttribute('data-id'));
+                if (note) {
+                    editingNoteId = note.id;
+                    elDate.value = note.date || ''; elTime.value = note.time || ''; elYear.value = note.year || '';
+                    elName.value = note.name || ''; elRole.value = note.role || 'Professeur'; toggleRoleSpecificFields(); 
+                    if (note.role === 'Professeur') elTeacherSubject.value = note.teacherSubject || '';
+                    if (note.role === 'Élève' || note.role === 'Parent') elStudentClass.value = note.studentClass || '';
+                    if (note.role === 'Parent') elParentStudentName.value = note.parentStudentName || '';
+                    if (note.role === 'Autre') elOtherRole.value = note.customRole || '';
+                    elMotif.value = note.motif || ''; toggleOtherMotif();
+                    if (note.motif === 'Autre') elOtherMotif.value = note.customMotif || '';
+                    elStatus.value = note.status || 'en_cours'; toggleReminder(); elReminderDate.value = note.reminderDate || '';
+                    elPriority.value = note.priority || 'aucune'; elUrl.value = note.url || '';
+                    
+                    currentAttachmentData = note.attachmentData || null; currentAttachmentName = note.attachmentName || null; updateAttachmentUI();
+                    elEditor.innerHTML = note.content || '';
+                    
+                    formTitle.innerHTML = `<span class="text-xl">✍️</span> <span class="text-amber-600 font-bold">Modifier</span>`;
+                    btnSaveNote.classList.add('from-amber-500', 'to-amber-400'); btnSaveNote.classList.remove('from-brand-600', 'to-brand-500');
+                    btnCancelEdit.classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+
+            const btnDelete = e.target.closest('.delete-single-note');
+            if (btnDelete) { noteToDeleteId = btnDelete.getAttribute('data-id'); document.getElementById('deleteModal').classList.remove('hidden'); }
+        });
+
+        let noteToDeleteId = null;
+        document.getElementById('btnCancelDelete').addEventListener('click', () => document.getElementById('deleteModal').classList.add('hidden'));
+        document.getElementById('btnConfirmDelete').addEventListener('click', () => {
+            notes = notes.filter(n => n.id !== noteToDeleteId); saveNotesToStorage(); updateDashboard();
+            document.getElementById('deleteModal').classList.add('hidden');
+        });
+
+        document.getElementById('btnDeleteAll').addEventListener('click', () => document.getElementById('deleteAllModal').classList.remove('hidden'));
+        document.getElementById('btnCancelDeleteAll').addEventListener('click', () => document.getElementById('deleteAllModal').classList.add('hidden'));
+        document.getElementById('btnConfirmDeleteAll').addEventListener('click', () => {
+            notes = []; saveNotesToStorage(); updateDashboard(); document.getElementById('deleteAllModal').classList.add('hidden');
+        });
+
+        const exportModal = document.getElementById('exportModal');
+        
+        document.getElementById('btnExport').addEventListener('click', () => {
+            document.getElementById('exportAllCount').textContent = notes.length;
+            document.getElementById('exportFilteredCount').textContent = currentFilteredNotes.length;
+            document.getElementById('exportFilenameInput').value = `LogiNote_${getExportFilenameDateStr()}`;
+            exportModal.classList.remove('hidden');
+        });
+
+        document.getElementById('btnCancelExport').addEventListener('click', () => exportModal.classList.add('hidden'));
+
+        document.querySelectorAll('input[name="exportFormat"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.getElementById('exportExtensionLabel').textContent = '.' + e.target.value;
+            });
+        });
+
+        document.getElementById('btnConfirmExport').addEventListener('click', () => {
+            const format = document.querySelector('input[name="exportFormat"]:checked').value;
+            const scope = document.querySelector('input[name="exportScope"]:checked').value;
+            const filename = document.getElementById('exportFilenameInput').value.trim() || `LogiNote_${getExportFilenameDateStr()}`;
+            const data = scope === 'filtered' ? currentFilteredNotes : notes;
+            
+            if (data.length === 0) { showToast("Aucune note à exporter.", "error"); return; }
+
+            let content = '', mime = '';
+            if (format === 'json') {
+                const exportObj = { version: "2.0", notes: data, settings: appSettings };
+                content = JSON.stringify(exportObj, null, 2);
+                mime = 'application/json';
+            } else if (format === 'csv') {
+                const headers = ['ID', 'Date', 'Heure', 'Année', 'Nom', 'Qualité', 'Matière', 'Classe', 'Enfant', 'Motif', 'Statut', 'Date Rappel', 'Priorité', 'Contenu'];
+                content = '\uFEFF' + headers.join(';') + '\n';
+                data.forEach(n => {
+                    const row = [
+                        n.id, n.date, n.time || '', n.year, n.name, n.role === 'Autre' ? n.customRole : n.role,
+                        n.teacherSubject || '', n.studentClass || '', n.parentStudentName || '',
+                        n.motif === 'Autre' ? n.customMotif : n.motif, n.status, n.reminderDate || '', n.priority,
+                        stripHtml(n.content).replace(/(\r\n|\n|\r)/gm, " ").replace(/;/g, ",")
+                    ];
+                    content += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(';') + '\n';
+                });
+                mime = 'text/csv;charset=utf-8;';
+            } else if (format === 'ics') {
+                content = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//LogiNote V2//FR\n';
+                data.forEach(n => {
+                    if (!n.date) return;
+                    const dParts = n.date.split('-');
+                    const dtstart = `${dParts[0]}${dParts[1]}${dParts[2]}`;
+                    const timeStr = n.time ? `T${n.time.replace(':','')}00` : '';
+                    content += 'BEGIN:VEVENT\n';
+                    content += `UID:${n.id}@loginote\n`;
+                    if (n.time) {
+                        content += `DTSTART:${dtstart}${timeStr}\nDTEND:${dtstart}${timeStr}\n`;
+                    } else {
+                        content += `DTSTART;VALUE=DATE:${dtstart}\n`;
+                    }
+                    content += `SUMMARY:${n.name} - ${n.role === 'Autre' ? (n.customRole || '') : n.role}\n`;
+                    content += `DESCRIPTION:Motif: ${n.motif === 'Autre' ? (n.customMotif || '') : n.motif}\\n\\n${stripHtml(n.content).replace(/\n/g, '\\n')}\n`;
+                    content += 'END:VEVENT\n';
+                });
+                content += 'END:VCALENDAR';
+                mime = 'text/calendar;charset=utf-8;';
+            }
+
+            const blob = new Blob([content], { type: mime });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+            link.download = `${filename}.${format}`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            exportModal.classList.add('hidden'); showToast(`Export ${format.toUpperCase()} réussi !`);
+        });
+
+        const importFile = document.getElementById('importFile');
+        document.getElementById('btnImport').addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const content = event.target.result;
+                    let added = 0;
+                    let settingsUpdated = false;
+                    
+                    if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(content);
+                        let arr = [];
+                        
+                        if (Array.isArray(parsed)) {
+                            arr = parsed;
+                        } else if (parsed && parsed.notes && Array.isArray(parsed.notes)) {
+                            arr = parsed.notes;
+                            
+                            if (parsed.settings) {
+                                appSettings = { ...appSettings, ...parsed.settings };
+                                localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+                                buildMotifsDropdown(appSettings.motifsText || defaultMotifsList);
+                                buildShortcuts(appSettings.shortcutsText || defaultShortcutsList);
+                                applyHeaderLogo();
+                                settingsUpdated = true;
+                            }
+                        }
+                        
+                        const ids = new Set(notes.map(n => n.id));
+                        arr.forEach(n => { if (!ids.has(n.id)) { notes.push(n); added++; } });
+                    } else if (file.name.endsWith('.csv')) {
+                        const rows = content.split('\n');
+                        for(let i=1; i<rows.length; i++) {
+                            if(!rows[i].trim()) continue;
+                            const cols = rows[i].split('";"').map(c => c.replace(/(^"|"$)/g, ''));
+                            if (cols.length > 5) {
+                                notes.push({
+                                    id: cols[0] || generateId(), date: cols[1], time: cols[2], year: cols[3], name: cols[4],
+                                    role: cols[5], teacherSubject: cols[6], studentClass: cols[7],
+                                    parentStudentName: cols[8], motif: cols[9], status: cols[10] || 'en_cours',
+                                    reminderDate: cols[11], priority: cols[12] || 'aucune', content: cols[13] || '', timestamp: Date.now()
+                                });
+                                added++;
+                            }
+                        }
+                    } else {
+                        showToast("Format invalide. Privilégiez l'import JSON.", "error");
+                        importFile.value = ''; return;
+                    }
+                    
+                    if (added > 0 || settingsUpdated) { 
+                        saveNotesToStorage(); updateDashboard(); 
+                        let msg = added > 0 ? `${added} note(s) importée(s) !` : 'Import réussi !';
+                        if (settingsUpdated) msg += ' Paramètres restaurés.';
+                        showToast(msg); 
+                    }
+                    else { showToast("Aucune nouvelle donnée trouvée.", "brand"); }
+                } catch (err) { showToast("Erreur de lecture du fichier.", "error"); }
+                importFile.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        let currentCalendarDate = new Date();
+        
+        document.getElementById('btnCalendar').addEventListener('click', () => {
+            document.getElementById('calendarModal').classList.remove('hidden'); 
+            document.getElementById('calendarModal').classList.add('flex');
+            setTimeout(() => { 
+                document.getElementById('calendarModal').classList.remove('opacity-0'); 
+                document.getElementById('calendarModalContent').classList.remove('scale-95'); 
+            }, 10);
+            renderCalendar();
+        });
+        
+        const closeCalendarObj = () => {
+            document.getElementById('calendarModal').classList.add('opacity-0'); 
+            document.getElementById('calendarModalContent').classList.add('scale-95');
+            setTimeout(() => { 
+                document.getElementById('calendarModal').classList.add('hidden'); 
+                document.getElementById('calendarModal').classList.remove('flex'); 
+            }, 300);
+        };
+        
+        document.getElementById('btnCloseCalendar').addEventListener('click', closeCalendarObj);
+        
+        document.getElementById('btnPrevMonth').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+        
+        document.getElementById('btnNextMonth').addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+        
+        const renderCalendar = () => {
+            const grid = document.getElementById('calendarGrid'); 
+            grid.innerHTML = '';
+            const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth();
+            
+            document.getElementById('calendarMonthYear').textContent = currentCalendarDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            
+            let firstDay = new Date(y, m, 1).getDay(); 
+            if(firstDay === 0) firstDay = 7;
+            
+            for(let i = 1; i < firstDay; i++) {
+                grid.innerHTML += `<div class="bg-slate-50 opacity-50"></div>`;
+            }
+            
+            const lastDay = new Date(y, m + 1, 0).getDate();
+            
+            for(let d = 1; d <= lastDay; d++) {
+                const cell = document.createElement('div'); 
+                cell.className = "bg-white p-1 border cursor-pointer hover:border-brand-300 flex flex-col gap-0.5 overflow-hidden min-h-[80px]";
+                
+                const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                cell.innerHTML = `<div class="text-xs font-bold text-slate-700 mb-1">${d}</div>`;
+                
+                let dayEvents = notes.filter(n => n.date === dateStr);
+                let dayReminders = notes.filter(n => n.status === 'rappel' && n.reminderDate === dateStr);
+                
+                dayEvents.sort((a, b) => {
+                    const tA = a.time || '';
+                    const tB = b.time || '';
+                    if(tA === tB) return a.timestamp - b.timestamp;
+                    if(!tA) return -1;
+                    if(!tB) return 1;
+                    return tA.localeCompare(tB);
+                });
+                
+                dayEvents.forEach(evt => {
+                    const el = document.createElement('div');
+                    el.className = "text-[9px] sm:text-[10px] truncate px-1 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium";
+                    el.textContent = (evt.time ? `${evt.time} ` : '') + evt.name;
+                    cell.appendChild(el);
+                });
+                
+                dayReminders.forEach(rem => {
+                    const el = document.createElement('div');
+                    el.className = "text-[9px] sm:text-[10px] truncate px-1 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium";
+                    el.textContent = `🔔 ${rem.name}`;
+                    cell.appendChild(el);
+                });
+                
+                cell.addEventListener('click', () => {
+                    openSidebarDay(y, m, d, dateStr, dayEvents, dayReminders);
+                });
+                
+                grid.appendChild(cell);
+            }
+        };
+        
+        const openSidebarDay = (y, m, d, dateStr, dayEvents, dayReminders) => {
+            document.getElementById('calendarSidebar').classList.remove('hidden'); 
+            document.getElementById('calendarSidebar').classList.add('flex');
+            
+            const dateObj = new Date(y, m, d);
+            document.getElementById('selectedDayTitle').textContent = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            
+            const container = document.getElementById('selectedDayEvents');
+            container.innerHTML = '';
+            
+            const btnAdd = document.createElement('button');
+            btnAdd.className = "w-full py-2 bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-200 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors mb-3 shadow-sm";
+            btnAdd.innerHTML = `➕ Nouvelle note à cette date`;
+            btnAdd.addEventListener('click', () => {
+                closeCalendarObj();
+                resetEditMode();
+                clearDraft();
+                elDate.value = dateStr;
+                elYear.value = calculateSchoolYear(dateStr);
+                saveDraft();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => elName.focus(), 100);
+            });
+            container.appendChild(btnAdd);
+            
+            if(dayEvents.length === 0 && dayReminders.length === 0) {
+                container.innerHTML += `<div class="text-sm text-slate-500 text-center py-4">Aucun événement ce jour.</div>`;
+                return;
+            }
+            
+            dayEvents.forEach(evt => {
+                const el = document.createElement('div');
+                el.className = "p-2 bg-white rounded border border-slate-200 shadow-sm cursor-pointer hover:border-brand-300";
+                el.innerHTML = `<div class="font-bold text-sm text-slate-800">${evt.time ? `🕒 ${evt.time}` : '📅 Journée'}</div>
+                                <div class="font-semibold text-brand-700">${evt.name}</div>
+                                <div class="text-xs text-slate-500 truncate">${evt.motif === 'Autre' ? (evt.customMotif || 'Autre') : (evt.motif || 'Sans motif')}</div>`;
+                el.addEventListener('click', () => {
+                    closeCalendarObj();
+                    elSearchPerson.value = evt.name;
+                    updateDashboard();
+                });
+                container.appendChild(el);
+            });
+            
+            dayReminders.forEach(rem => {
+                const el = document.createElement('div');
+                el.className = "p-2 bg-amber-50 rounded border border-amber-200 shadow-sm cursor-pointer hover:border-amber-400";
+                el.innerHTML = `<div class="font-bold text-sm text-amber-800">🔔 RAPPEL</div>
+                                <div class="font-semibold text-amber-900">${rem.name}</div>`;
+                el.addEventListener('click', () => {
+                    closeCalendarObj();
+                    elSearchPerson.value = rem.name;
+                    updateDashboard();
+                });
+                container.appendChild(el);
+            });
+        };
+        
+        document.getElementById('btnCloseSidebar').addEventListener('click', () => {
+            document.getElementById('calendarSidebar').classList.add('hidden'); 
+            document.getElementById('calendarSidebar').classList.remove('flex');
+        });
+        
+        if(document.getElementById('btnCalendarExportIcs')) {
+            document.getElementById('btnCalendarExportIcs').addEventListener('click', () => {
+                document.getElementById('exportFilenameInput').value = `LogiNote_${getExportFilenameDateStr()}`;
+                document.querySelector('input[name="exportFormat"][value="ics"]').checked = true;
+                document.getElementById('exportExtensionLabel').textContent = '.ics';
+                document.getElementById('exportModal').classList.remove('hidden');
+                closeCalendarObj();
+            });
+        }
+
+        window.onload = () => { loadSettings(); loadNotes(); loadDraft(); };
     </script>
 </body>
 </html>
